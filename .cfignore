@@ -1,0 +1,9 @@
+node_modules/
+__pycache__/
+backend.py
+server.js
+requirements.txt
+Dockerfile
+fly.toml
+package.json
+package-lock.json
