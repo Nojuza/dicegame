@@ -5,7 +5,11 @@ import random
 from itertools import product
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+    'https://*.pages.dev',
+])
 
 # ─── Hand Classification ───────────────────────────────────────────
 
