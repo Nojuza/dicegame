@@ -1,0 +1,3794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiceHands — Probability Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0b0b1a;
+            --bg-secondary: #12122a;
+            --bg-card: rgba(22, 22, 52, 0.85);
+            --bg-card-hover: rgba(30, 30, 68, 0.9);
+            --accent-1: #7c3aed;
+            --accent-2: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #7c3aed, #3b82f6);
+            --accent-glow: rgba(124, 58, 237, 0.35);
+            --text-primary: #e8ecf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #5a6578;
+            --border: rgba(255, 255, 255, 0.08);
+            --gold: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.35);
+            --green: #10b981;
+            --red: #ef4444;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ---------- HEADER ---------- */
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 24px;
+            background: rgba(11, 11, 26, 0.82);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border);
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent-gradient);
+            border-radius: 8px;
+            display: grid; place-items: center;
+            font-weight: 800; font-size: 15px; color: #fff;
+        }
+        .logo-text { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+
+        .nav {
+            display: flex; gap: 4px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px; padding: 3px;
+        }
+        .nav-btn {
+            font-family: var(--font);
+            padding: 8px 18px;
+            font-size: 13px; font-weight: 600;
+            border: none; border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-btn.active {
+            background: var(--accent-gradient);
+            color: #fff;
+            box-shadow: 0 2px 12px var(--accent-glow);
+        }
+        .nav-btn:not(.active):hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+
+        /* ---------- PAGES ---------- */
+        .page { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .page.active { display: block; animation: pageFadeIn 0.4s ease; }
+
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header { margin-bottom: 24px; }
+        .page-header h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .page-header p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+
+        /* ---------- CONFIG BAR ---------- */
+        .config-bar {
+            display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .config-item { display: flex; align-items: center; gap: 10px; }
+        .config-item label { font-size: 13px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+
+        .stepper {
+            display: flex; align-items: center; gap: 0;
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .stepper button {
+            font-family: var(--font);
+            width: 32px; height: 32px;
+            border: none; background: transparent;
+            color: var(--text-primary);
+            font-size: 16px; font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .stepper button:hover { background: rgba(255,255,255,0.08); }
+        .stepper span {
+            min-width: 32px; text-align: center;
+            font-weight: 700; font-size: 14px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .config-divider {
+            width: 1px; height: 24px;
+            background: var(--border);
+        }
+
+        .toggle-group {
+            display: flex; gap: 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius-sm);
+            padding: 2px;
+            border: 1px solid var(--border);
+        }
+        .toggle-btn {
+            font-family: var(--font);
+            padding: 6px 12px;
+            font-size: 12px; font-weight: 600;
+            border: none; border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        .toggle-btn.active { background: var(--accent-gradient); color: #fff; }
+
+        /* ---------- PROB TABLE ---------- */
+        .table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .table-wrap table { width: 100%; border-collapse: collapse; }
+        .table-wrap th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+        .table-wrap td {
+            padding: 10px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .table-wrap tr:last-child td { border-bottom: none; }
+        .table-wrap tbody tr {
+            transition: background 0.2s;
+        }
+        .table-wrap tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+        .row-fade-in {
+            animation: rowSlideIn 0.35s ease both;
+        }
+        @keyframes rowSlideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .rank-num {
+            font-weight: 800; font-size: 13px;
+            width: 28px; height: 28px;
+            display: grid; place-items: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            font-variant-numeric: tabular-nums;
+        }
+        .hand-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px; font-weight: 600;
+            white-space: nowrap;
+        }
+        .hand-badge.straight { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .hand-badge.kind { background: rgba(124, 58, 237, 0.15); color: #a78bfa; }
+        .hand-badge.nothing { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+
+        .td-count, .td-prob {
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+        }
+        .td-prob { color: var(--gold); font-weight: 700; }
+
+        .bar-cell { width: 30%; }
+        .prob-bar-wrap {
+            height: 22px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .prob-bar {
+            height: 100%;
+            background: var(--accent-gradient);
+            border-radius: 4px;
+            transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 2px;
+        }
+
+        .table-footer {
+            padding: 12px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ---------- CHART ---------- */
+        .chart-section {
+            margin-top: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .chart-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+
+        .hbar-chart { display: flex; flex-direction: column; gap: 10px; }
+        .hbar-row { display: flex; align-items: center; gap: 12px; }
+        .hbar-label {
+            min-width: 110px;
+            font-size: 12px; font-weight: 600;
+            text-align: right;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .hbar-track {
+            flex: 1; height: 28px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .hbar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+        .hbar-fill.straight { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .hbar-fill.kind { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+        .hbar-fill.nothing { background: linear-gradient(90deg, #475569, #64748b); }
+        .hbar-value {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            font-size: 11px; font-weight: 700; color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .hbar-value-outside {
+            margin-left: 8px;
+            font-size: 11px; font-weight: 700;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* ---------- SIMULATOR ---------- */
+        .sim-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .sim-main {
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .dice-area {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 24px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .die {
+            width: 72px; height: 72px;
+            background: linear-gradient(145deg, #f0f0f5, #d8d8e2);
+            border-radius: 14px;
+            display: grid; place-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+            position: relative;
+            border: 3px solid transparent;
+        }
+        .die:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
+        .die:active { transform: translateY(-1px) scale(0.97); }
+
+        .die.held {
+            border-color: var(--gold);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 0 18px var(--gold-glow);
+            transform: translateY(-6px);
+        }
+        .die.held::after {
+            content: 'HELD';
+            position: absolute;
+            bottom: -10px; left: 50%; transform: translateX(-50%);
+            font-size: 9px; font-weight: 800;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+
+        .die.empty {
+            background: rgba(255,255,255,0.06);
+            border: 2px dashed rgba(255,255,255,0.15);
+            box-shadow: none;
+            cursor: default;
+        }
+        .die-placeholder {
+            font-size: 28px; font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .die-pips {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 48px; height: 48px;
+        }
+        .die-pips > div { display: grid; place-items: center; }
+        .pip {
+            width: 11px; height: 11px;
+            background: #1a1a34;
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .die-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1a1a34;
+        }
+
+        .die.rolling {
+            animation: diceRoll 0.55s ease-out;
+        }
+        @keyframes diceRoll {
+            0%   { transform: scale(1) rotate(0deg); }
+            20%  { transform: scale(0.82) rotate(80deg); }
+            40%  { transform: scale(1.08) rotate(160deg); }
+            60%  { transform: scale(0.9) rotate(240deg); }
+            80%  { transform: scale(1.04) rotate(320deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+        .die.held.rolling { animation: none; }
+
+        .dice-hint {
+            font-size: 12px; color: var(--text-muted);
+            margin-top: 12px;
+        }
+
+        /* Roll controls */
+        .roll-controls {
+            display: flex; align-items: center; justify-content: center;
+            gap: 16px; flex-wrap: wrap;
+        }
+        .roll-btn {
+            font-family: var(--font);
+            padding: 14px 44px;
+            font-size: 16px; font-weight: 700;
+            background: var(--accent-gradient);
+            color: #fff; border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            box-shadow: 0 4px 18px var(--accent-glow);
+        }
+        .roll-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px var(--accent-glow);
+        }
+        .roll-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+        .roll-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .rolls-badge {
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .new-round-btn {
+            font-family: var(--font);
+            padding: 10px 20px;
+            font-size: 13px; font-weight: 600;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .new-round-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+        /* Hand result display */
+        .hand-result {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            min-height: 90px;
+            display: grid; place-items: center;
+        }
+        .hand-result-name {
+            font-size: 28px; font-weight: 800;
+            letter-spacing: -0.5px;
+            animation: handReveal 0.4s ease;
+        }
+        .hand-result-name.straight { color: #60a5fa; }
+        .hand-result-name.kind { color: #a78bfa; }
+        .hand-result-name.nothing { color: var(--text-muted); }
+        .hand-result-sub {
+            font-size: 13px; color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .hand-result-placeholder {
+            font-size: 18px; color: var(--text-muted); font-weight: 500;
+        }
+
+        @keyframes handReveal {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        /* Sidebar */
+        .sim-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .panel-title {
+            font-size: 14px; font-weight: 700;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .panel-title-icon {
+            width: 22px; height: 22px;
+            background: var(--accent-gradient);
+            border-radius: 6px;
+            display: grid; place-items: center;
+            font-size: 11px;
+        }
+
+        .setting { margin-bottom: 14px; }
+        .setting:last-child { margin-bottom: 0; }
+        .setting-label {
+            font-size: 12px; font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .setting-row {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .setting input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            outline: none;
+        }
+        .setting input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .setting-val {
+            min-width: 28px; text-align: center;
+            font-weight: 700; font-size: 14px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-secondary); font-weight: 500; }
+        .stat-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+        .stat-value.straight { color: #60a5fa; }
+        .stat-value.kind { color: #a78bfa; }
+
+        /* Batch simulation */
+        .batch-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .batch-input {
+            font-family: var(--font);
+            flex: 1; padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 14px; font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .batch-input:focus { outline: none; border-color: var(--accent-1); }
+
+        .batch-btn {
+            font-family: var(--font);
+            padding: 8px 16px;
+            font-size: 13px; font-weight: 700;
+            background: var(--accent-gradient);
+            color: #fff; border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        .batch-btn:hover { box-shadow: 0 4px 14px var(--accent-glow); }
+        .batch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .batch-results { margin-top: 8px; }
+        .batch-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .batch-row:last-child { border-bottom: none; }
+
+        /* ---------- MOBILE ---------- */
+        @media (max-width: 800px) {
+            .header { padding: 10px 16px; }
+            .logo-text { font-size: 16px; }
+            .nav-btn { padding: 7px 12px; font-size: 12px; }
+
+            .page { padding: 16px; }
+            .page-header h2 { font-size: 20px; }
+
+            .config-bar { padding: 12px 14px; gap: 10px; }
+
+            .table-wrap { font-size: 13px; }
+            .table-wrap th, .table-wrap td { padding: 8px 10px; }
+            .td-count-col { display: none; }
+            .bar-cell { width: 25%; }
+
+            .hbar-label { min-width: 80px; font-size: 11px; }
+
+            .sim-layout {
+                grid-template-columns: 1fr;
+            }
+            .sim-sidebar { order: 2; }
+
+            .dice-area { padding: 24px 16px; }
+            .die { width: 60px; height: 60px; }
+            .die-pips { width: 40px; height: 40px; }
+            .pip { width: 9px; height: 9px; }
+            .die-number { font-size: 24px; }
+
+            .roll-btn { padding: 12px 32px; font-size: 15px; }
+            .hand-result-name { font-size: 22px; }
+
+            .prob-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .die { width: 52px; height: 52px; border-radius: 10px; }
+            .die-pips { width: 34px; height: 34px; }
+            .pip { width: 7px; height: 7px; }
+            .dice-container { gap: 10px; }
+            .config-bar { flex-direction: column; align-items: stretch; }
+            .config-item { justify-content: space-between; }
+            .config-divider { width: 100%; height: 1px; }
+        }
+
+        /* ---------- SORTABLE RANKING LIST ---------- */
+        .ranking-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .ranking-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .ranking-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+
+        .sortable-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            user-select: none;
+        }
+        .sortable-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        }
+        .sortable-item:hover { background: rgba(255,255,255,0.06); }
+        .sortable-item.dragging { opacity: 0.2; }
+        .sortable-item.drag-over-top { border-top-color: var(--accent-1); }
+        .sortable-item.drag-over-bottom { border-bottom-color: var(--accent-1); }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            font-size: 18px;
+            padding: 4px 2px;
+            touch-action: none;
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        .sortable-rank {
+            min-width: 20px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .drag-clone {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+            opacity: 0.92;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--accent-1);
+        }
+
+        /* ---------- SPECIFIC PROB SORTABLE ---------- */
+        .specific-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+        }
+        .specific-header .sh-drag { width: 22px; }
+        .specific-header .sh-hand { flex: 1; }
+        .specific-header .sh-prob { width: 100px; }
+        .specific-header .sh-inst { width: 80px; text-align: right; }
+        .specific-header .sh-bar { width: 30%; }
+
+        #prob-specific-list .sortable-item {
+            padding: 10px 16px;
+            border-radius: 0;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            border-left: 2px solid transparent;
+            border-right: 2px solid transparent;
+            transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        }
+        #prob-specific-list .sortable-item:last-child { border-bottom: none; }
+        #prob-specific-list .sortable-item:hover { background: rgba(255,255,255,0.03); }
+        #prob-specific-list .sortable-item.drag-over-top { border-top: 2px solid var(--accent-1); }
+        #prob-specific-list .sortable-item.drag-over-bottom { border-bottom: 2px solid var(--accent-1); }
+        #prob-specific-list .sp-hand { flex: 1; }
+        #prob-specific-list .sp-prob {
+            width: 100px;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            color: var(--gold);
+            font-size: 14px;
+        }
+        #prob-specific-list .sp-inst {
+            width: 80px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        #prob-specific-list .sp-bar { width: 30%; }
+
+        @media (max-width: 768px) {
+            .specific-header .sh-inst,
+            #prob-specific-list .sp-inst { display: none; }
+            .specific-header .sh-bar,
+            #prob-specific-list .sp-bar { width: 25%; }
+        }
+
+        /* ---------- PROB GRID LAYOUT ---------- */
+        .prob-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .table-group-header {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+        .hand-result-multi {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .hand-result-plus {
+            color: var(--text-muted);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* ---------- HOLD'EM MODE TABS ---------- */
+        .mode-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .mode-tab {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-tab.active {
+            background: var(--accent-gradient);
+            color: #fff;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .mode-tab:not(.active):hover { background: rgba(255,255,255,0.05); }
+        .mode-content { display: none; }
+        .mode-content.active { display: block; }
+
+        /* ---------- HOLD'EM GAME BOARD ---------- */
+        .holdem-board {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .dealer-area {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .dealer-area h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .dealer-dice {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .dealer-dice .die {
+            width: 52px;
+            height: 52px;
+            font-size: 20px;
+        }
+        .dealer-dice .die-pips { width: 34px; height: 34px; }
+        .dealer-dice .pip { width: 8px; height: 8px; }
+        .pot-display {
+            text-align: center;
+            margin: 16px 0;
+            padding: 10px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: var(--radius-sm);
+        }
+        .pot-display .pot-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gold);
+            margin-bottom: 2px;
+        }
+        .pot-display .pot-amount {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        /* ---------- PLAYER ROWS ---------- */
+        .players-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        .player-row.active-turn {
+            border-color: var(--accent-1);
+            background: rgba(124, 58, 237, 0.06);
+        }
+        .player-row.folded { opacity: 0.35; }
+        .player-row.eliminated { opacity: 0.2; text-decoration: line-through; pointer-events: none; }
+        .player-row.is-human { background: rgba(59, 130, 246, 0.05); }
+
+        /* Session status */
+        #session-status { margin-bottom: 8px; }
+        .session-info {
+            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+            padding: 6px 12px; border-radius: 8px;
+            background: var(--surface-2); font-size: 13px;
+        }
+        .session-round { font-weight: 600; color: var(--accent); }
+        .session-alive { color: var(--green); }
+        .session-elims { color: var(--red); font-size: 12px; }
+        .player-info {
+            min-width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .player-name {
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .strategy-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .strategy-badge.human { background: rgba(59,130,246,0.2); color: var(--accent-2); }
+        .strategy-badge.tp { background: rgba(16,185,129,0.15); color: var(--green); }
+        .strategy-badge.ta { background: rgba(239,68,68,0.15); color: var(--red); }
+        .strategy-badge.lp { background: rgba(245,158,11,0.15); color: var(--gold); }
+        .strategy-badge.la { background: rgba(168,85,247,0.15); color: #a855f7; }
+        .player-dice {
+            display: flex;
+            gap: 6px;
+        }
+        .player-dice .die {
+            width: 38px;
+            height: 38px;
+            font-size: 16px;
+        }
+        .player-dice .die-pips { width: 24px; height: 24px; }
+        .player-dice .pip { width: 5px; height: 5px; }
+        .player-dice .die.hidden-die {
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .player-chips {
+            margin-left: auto;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+        }
+        .player-bet {
+            font-size: 11px;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* ---------- ACTION BAR ---------- */
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .action-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover:not(:disabled) {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-1);
+        }
+        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .action-btn.action-fold { border-color: rgba(239,68,68,0.3); }
+        .action-btn.action-fold:hover:not(:disabled) { border-color: var(--red); background: rgba(239,68,68,0.1); }
+        .action-btn.action-raise { border-color: rgba(16,185,129,0.3); }
+        .action-btn.action-raise:hover:not(:disabled) { border-color: var(--green); background: rgba(16,185,129,0.1); }
+        .raise-input {
+            width: 70px;
+            padding: 8px 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* ---------- GAME LOG ---------- */
+        .game-log {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            max-height: 220px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .game-log h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .log-entry {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .log-entry .log-player { font-weight: 600; color: var(--text-primary); }
+        .log-entry.log-phase {
+            color: var(--accent-2);
+            font-weight: 600;
+            padding: 6px 0;
+            margin-top: 4px;
+        }
+        .log-entry.log-result {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* ---------- GAME CONTROLS ---------- */
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .game-ctrl-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--accent-gradient);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .game-ctrl-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+        .game-ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .game-ctrl-btn.secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            box-shadow: none;
+            color: var(--text-secondary);
+        }
+        .game-ctrl-btn.secondary:hover { border-color: var(--accent-1); color: var(--text-primary); }
+
+        /* ---------- HOLD'EM SETTINGS ---------- */
+        .setting-select {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .visibility-toggles {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .vis-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+        .vis-toggle-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .toggle-slider::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent-1); }
+        .toggle-switch input:checked + .toggle-slider::after { transform: translateX(16px); }
+
+        .player-config {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 0;
+        }
+        .player-config-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .player-config-row .player-config-name {
+            min-width: 60px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .player-config-row select {
+            flex: 1;
+            padding: 4px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 12px;
+        }
+
+        /* ---------- RANKING EDITOR ---------- */
+        .ranking-section {
+            margin-bottom: 12px;
+        }
+        .ranking-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            cursor: pointer;
+            user-select: none;
+        }
+        .ranking-section-header h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+        .ranking-section-header .chevron {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        .ranking-section.collapsed .chevron { transform: rotate(-90deg); }
+        .ranking-section.collapsed .sortable-list { display: none; }
+        .sortable-item .hand-toggle {
+            margin-left: auto;
+        }
+        .sub-values {
+            padding-left: 32px;
+            border-left: 2px solid var(--border);
+            margin-left: 14px;
+            margin-top: 2px;
+            margin-bottom: 4px;
+        }
+        .sub-value-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            border: 2px solid transparent;
+            transition: background 0.15s;
+        }
+        .sub-value-item:hover { background: rgba(255,255,255,0.03); }
+        .sub-value-item.dragging { opacity: 0.2; }
+        .sub-value-item.drag-over-top { border-top-color: var(--accent-1); }
+        .sub-value-item.drag-over-bottom { border-bottom-color: var(--accent-1); }
+        .sub-value-item .drag-handle { font-size: 14px; }
+        .sub-value-item.disabled { opacity: 0.35; }
+
+        /* ---------- RANKING OVERLAY (full page) ---------- */
+        .ranking-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .ranking-overlay.active { display: block; }
+        .ranking-overlay-inner {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+        }
+        .ranking-overlay-inner h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .ranking-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s;
+            font-family: var(--font);
+        }
+        .ranking-close:hover { border-color: var(--red); color: var(--red); }
+        .ranking-expand-btn {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .ranking-expand-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+
+        .sortable-item .hand-prob {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: auto;
+            margin-right: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+        .sub-value-item .sv-prob {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-left: auto;
+            margin-right: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ---------- BATCH OUTPUT ---------- */
+        .batch-output {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .batch-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+        .batch-panel h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .batch-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+        .batch-stat-row .stat-bar {
+            flex: 1;
+            max-width: 120px;
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+            margin-left: 12px;
+            overflow: hidden;
+        }
+        .batch-stat-row .stat-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--accent-gradient);
+            transition: width 0.3s;
+        }
+        .batch-progress {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ---------- HOLD'EM RESPONSIVE ---------- */
+        @media (max-width: 800px) {
+            .player-row { flex-wrap: wrap; gap: 8px; }
+            .player-info { min-width: 80px; }
+            .player-chips { margin-left: 0; }
+            .action-bar { justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .holdem-board { padding: 14px; }
+            .player-dice .die { width: 32px; height: 32px; font-size: 14px; }
+            .player-dice .die-pips { width: 20px; height: 20px; }
+            .player-dice .pip { width: 4px; height: 4px; }
+            .dealer-dice .die { width: 44px; height: 44px; }
+            .dealer-dice .die-pips { width: 28px; height: 28px; }
+            .dealer-dice .pip { width: 6px; height: 6px; }
+            .action-btn { padding: 8px 14px; font-size: 12px; }
+        }
+
+        /* Utility */
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="logo">
+        <div class="logo-icon">D</div>
+        <span class="logo-text">DiceHands</span>
+    </div>
+    <nav class="nav">
+        <button class="nav-btn active" data-page="probabilities">Probabilities</button>
+        <button class="nav-btn" data-page="simulator">Simulator</button>
+    </nav>
+</header>
+
+<!-- ============ PROBABILITIES PAGE ============ -->
+<section id="page-probabilities" class="page active">
+    <div class="page-header">
+        <h2>Hand Probabilities</h2>
+        <p>Straights and n-of-a-kind are counted independently — a single roll can score in both</p>
+    </div>
+
+    <div class="config-bar">
+        <div class="config-item">
+            <label>Dice</label>
+            <div class="stepper">
+                <button onclick="adjustProb('dice', -1)">-</button>
+                <span id="prob-dice-val">5</span>
+                <button onclick="adjustProb('dice', 1)">+</button>
+            </div>
+        </div>
+        <div class="config-item">
+            <label>Sides</label>
+            <div class="stepper">
+                <button onclick="adjustProb('sides', -1)">-</button>
+                <span id="prob-sides-val">6</span>
+                <button onclick="adjustProb('sides', 1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="prob-grid">
+        <div class="table-wrap">
+            <div class="table-group-header">Straights</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hand</th>
+                        <th class="td-count-col">Outcomes</th>
+                        <th style="width:100px">Probability</th>
+                        <th class="bar-cell"></th>
+                    </tr>
+                </thead>
+                <tbody id="prob-straight-tbody"></tbody>
+            </table>
+        </div>
+        <div class="table-wrap">
+            <div class="table-group-header">N-of-a-Kind</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hand</th>
+                        <th class="td-count-col">Outcomes</th>
+                        <th style="width:100px">Probability</th>
+                        <th class="bar-cell"></th>
+                    </tr>
+                </thead>
+                <tbody id="prob-kind-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <div class="table-group-header">Specific Instance Probabilities</div>
+        <div class="specific-header">
+            <span class="sh-drag"></span>
+            <span class="sh-hand">Hand</span>
+            <span class="sh-prob">Probability</span>
+            <span class="sh-inst">Instances</span>
+            <span class="sh-bar"></span>
+        </div>
+        <div class="sortable-list" id="prob-specific-list"></div>
+        <div class="table-footer">
+            <span id="prob-method"></span>
+            <span id="prob-total"></span>
+        </div>
+    </div>
+
+    <div class="chart-section">
+        <h3>Distribution</h3>
+        <div class="prob-grid">
+            <div>
+                <h4 style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Straights</h4>
+                <div id="prob-straight-chart" class="hbar-chart"></div>
+            </div>
+            <div>
+                <h4 style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">N-of-a-Kind</h4>
+                <div id="prob-kind-chart" class="hbar-chart"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ SIMULATOR PAGE ============ -->
+<section id="page-simulator" class="page">
+    <div class="sim-layout">
+        <div class="sim-main">
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="play" onclick="switchSimMode('play')">Play</button>
+                <button class="mode-tab" data-mode="batch" onclick="switchSimMode('batch')">Batch Simulate</button>
+            </div>
+
+            <!-- PLAY MODE -->
+            <div class="mode-content active" id="mode-play">
+                <div class="game-controls">
+                    <button class="game-ctrl-btn" id="start-game-btn" onclick="startHoldemGame()">Deal New Game</button>
+                    <button class="game-ctrl-btn" id="start-session-btn" onclick="startSession()">Start Session</button>
+                    <button class="game-ctrl-btn secondary" id="next-step-btn" onclick="advanceGame()" disabled>Next Step</button>
+                    <button class="game-ctrl-btn secondary" id="auto-play-btn" onclick="toggleAutoPlay()">Auto-Play</button>
+                </div>
+                <div id="session-status"></div>
+
+                <div class="holdem-board" id="holdem-board">
+                    <div class="dealer-area">
+                        <h4>Community Dice</h4>
+                        <div class="dealer-dice" id="dealer-dice"></div>
+                    </div>
+                    <div class="pot-display">
+                        <div class="pot-label">Pot</div>
+                        <div class="pot-amount" id="pot-amount">0</div>
+                    </div>
+                    <div class="players-area" id="players-area"></div>
+                    <div class="action-bar" id="action-bar" style="display:none"></div>
+                </div>
+
+                <div class="game-log" id="game-log">
+                    <h4>Game Log</h4>
+                    <div id="log-entries">
+                        <div class="log-entry" style="color:var(--text-muted)">Click "Deal New Game" to start</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BATCH MODE -->
+            <div class="mode-content" id="mode-batch">
+                <div class="holdem-board">
+                    <h3 style="margin-bottom:16px;font-size:16px">Batch Simulation</h3>
+                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+                        <label style="font-size:13px;color:var(--text-secondary)">Games:</label>
+                        <input class="raise-input" type="number" value="1000" min="10" max="100000" id="holdem-batch-count" style="width:100px">
+                        <button class="game-ctrl-btn" id="holdem-batch-btn" onclick="runHoldemBatch()">Run Simulation</button>
+                    </div>
+                    <div class="batch-output" id="holdem-batch-output">
+                        <div class="batch-progress" style="color:var(--text-muted)">Configure settings and click Run</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sim-sidebar">
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-icon">G</div>
+                    Game Settings
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Players</div>
+                    <div class="setting-row">
+                        <input type="range" min="2" max="6" value="4" id="he-num-players" oninput="updateHoldemSetting()">
+                        <span class="setting-val" id="he-num-players-val">4</span>
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Dice Sides</div>
+                    <div class="setting-row">
+                        <input type="range" min="4" max="20" value="6" id="he-sides" oninput="updateHoldemSetting()">
+                        <span class="setting-val" id="he-sides-val">6</span>
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Starting Chips</div>
+                    <div class="setting-row">
+                        <input type="range" min="20" max="500" step="10" value="100" id="he-start-chips" oninput="updateHoldemSetting()">
+                        <span class="setting-val" id="he-start-chips-val">100</span>
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Small / Big Blind</div>
+                    <div class="setting-row" style="gap:6px">
+                        <input class="raise-input" type="number" value="1" min="1" max="50" id="he-sb" onchange="updateHoldemSetting()" style="width:50px">
+                        <span style="color:var(--text-muted)">/</span>
+                        <input class="raise-input" type="number" value="2" min="2" max="100" id="he-bb" onchange="updateHoldemSetting()" style="width:50px">
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Min Straight Length</div>
+                    <div class="setting-row">
+                        <input type="range" min="2" max="5" value="3" id="he-min-straight" oninput="updateHoldemSetting()">
+                        <span class="setting-val" id="he-min-straight-val">3</span>
+                    </div>
+                </div>
+
+
+                <div class="setting">
+                    <div class="setting-label">Dice Visibility per Round</div>
+                    <div class="visibility-toggles" id="vis-toggles"></div>
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Player Strategies</div>
+                    <div class="player-config" id="player-config"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-icon">A</div>
+                    AI Profiles
+                </div>
+
+                <div class="setting">
+                    <div class="setting-label">Edit Profile</div>
+                    <div class="setting-row">
+                        <select id="ai-profile-select" onchange="renderAIProfileEditor()" style="flex:1; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; font-family:var(--font); font-size:13px;">
+                            <option value="TP">TP — Tight Passive</option>
+                            <option value="TA" selected>TA — Tight Aggressive</option>
+                            <option value="LP">LP — Loose Passive</option>
+                            <option value="LA">LA — Loose Aggressive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="ai-profile-editor"></div>
+
+                <div id="ai-profile-warning" style="display:none; color:var(--red); font-size:12px; padding:8px; background:rgba(239,68,68,0.1); border-radius:var(--radius-sm); margin-top:8px;">
+                    Warning: Fold threshold >= Raise threshold. AI will never call — only fold, bluff, or raise.
+                </div>
+
+                <div style="margin-top:10px">
+                    <button class="game-ctrl-btn" onclick="resetAIProfile()" style="width:100%; font-size:12px; padding:6px 0;">Reset to Default</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-icon">H</div>
+                    Hand Ranking
+                </div>
+                <p class="ranking-hint">Drag to reorder. Toggle to enable/disable.</p>
+                <div id="ranking-editor"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+/* ==============================================
+   BACKEND API
+   ============================================== */
+const API_URL = 'http://localhost:5000/api';
+let backendAvailable = null; // null = unknown, true/false after first check
+
+async function checkBackend() {
+    try {
+        const r = await fetch(API_URL + '/health', { signal: AbortSignal.timeout(1500) });
+        backendAvailable = r.ok;
+    } catch { backendAvailable = false; }
+    return backendAvailable;
+}
+
+async function apiPost(endpoint, data) {
+    const r = await fetch(API_URL + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal: AbortSignal.timeout(30000),
+    });
+    if (!r.ok) throw new Error('API error ' + r.status);
+    return r.json();
+}
+
+/* ==============================================
+   STATE
+   ============================================== */
+const state = {
+    prob: { dice: 5, sides: 6, specificOrder: null },
+};
+
+/* ==============================================
+   NAVIGATION
+   ============================================== */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    });
+});
+
+/* ==============================================
+   HAND CLASSIFICATION (INDEPENDENT)
+   A single roll produces two independent results:
+   - Best straight: longest consecutive run (if >= minStraight)
+   - Best n-of-a-kind: max frequency (if >= 2)
+   ============================================== */
+function classifyRoll(dice, numSides) {
+    if (!dice.length) return { maxKind: 0, longestRun: 0, freq: {} };
+
+    const freq = {};
+    dice.forEach(d => { freq[d] = (freq[d] || 0) + 1; });
+    const maxKind = Math.max(...Object.values(freq));
+
+    const present = new Set(dice);
+    let longestRun = 1, run = 1;
+    for (let v = 2; v <= numSides; v++) {
+        if (present.has(v) && present.has(v - 1)) {
+            run++;
+            if (run > longestRun) longestRun = run;
+        } else if (present.has(v)) {
+            run = 1;
+        }
+    }
+    if (present.size === 0) longestRun = 0;
+    if (present.size === 1) longestRun = 1;
+
+    return { maxKind, longestRun, freq, present };
+}
+
+function getHands(dice, numSides, minStraight) {
+    const { maxKind, longestRun } = classifyRoll(dice, numSides);
+    const ms = minStraight || 3;
+    const results = [];
+    if (longestRun >= ms) results.push({ type: 'straight', n: longestRun });
+    if (maxKind >= 2) results.push({ type: 'kind', n: maxKind });
+    return results;
+}
+
+function handKey(hand) {
+    return hand.type + '-' + hand.n;
+}
+
+function handLabel(key) {
+    if (key === 'no-straight') return 'No straight';
+    if (key === 'no-kind') return 'No match';
+    const [type, n] = key.split('-');
+    if (type === 'straight') return 'Straight of ' + n;
+    return n + ' of a Kind';
+}
+
+function handType(key) {
+    if (key.startsWith('straight')) return 'straight';
+    if (key.startsWith('kind')) return 'kind';
+    return 'nothing';
+}
+
+/* ==============================================
+   PROBABILITY CALCULATION (INDEPENDENT)
+   ============================================== */
+function calculateProbabilities(numDice, numSides, minStraight) {
+    const total = Math.pow(numSides, numDice);
+    const ms = minStraight || 3;
+    const maxStraight = Math.min(numDice, numSides);
+
+    // "Exactly" counts: longest run == n, max freq == n
+    const straightCounts = {};  // key: 'straight-N' or 'no-straight'
+    const kindCounts = {};      // key: 'kind-N' or 'no-kind'
+
+    // "Specific" counts: using value 1 as representative
+    const specificKind = {};    // key: 'kind-N', counts where freq[1] >= N
+    const specificStraight = {}; // key: 'straight-N', counts where values 1..N all present
+
+    const useEnum = total <= 600000;
+    const sampleCount = useEnum ? total : 500000;
+
+    if (useEnum) {
+        const dice = new Array(numDice).fill(1);
+        for (let i = 0; i < total; i++) {
+            tallyOutcome(dice, numSides, ms, maxStraight, numDice,
+                straightCounts, kindCounts, specificKind, specificStraight);
+
+            for (let d = numDice - 1; d >= 0; d--) {
+                dice[d]++;
+                if (dice[d] <= numSides) break;
+                dice[d] = 1;
+            }
+        }
+    } else {
+        for (let i = 0; i < sampleCount; i++) {
+            const dice = [];
+            for (let d = 0; d < numDice; d++) dice.push(Math.floor(Math.random() * numSides) + 1);
+            tallyOutcome(dice, numSides, ms, maxStraight, numDice,
+                straightCounts, kindCounts, specificKind, specificStraight);
+        }
+    }
+
+    return {
+        straightCounts, kindCounts,
+        specificKind, specificStraight,
+        total: sampleCount, simulated: !useEnum,
+        maxStraight, ms
+    };
+}
+
+function tallyOutcome(dice, numSides, ms, maxStraight, numDice,
+    straightCounts, kindCounts, specificKind, specificStraight) {
+    const { maxKind, longestRun, freq, present } = classifyRoll(dice, numSides);
+
+    // Exactly: longest run
+    if (longestRun >= ms) {
+        const sk = 'straight-' + longestRun;
+        straightCounts[sk] = (straightCounts[sk] || 0) + 1;
+    } else {
+        straightCounts['no-straight'] = (straightCounts['no-straight'] || 0) + 1;
+    }
+
+    // Exactly: max frequency
+    if (maxKind >= 2) {
+        const kk = 'kind-' + maxKind;
+        kindCounts[kk] = (kindCounts[kk] || 0) + 1;
+    } else {
+        kindCounts['no-kind'] = (kindCounts['no-kind'] || 0) + 1;
+    }
+
+    // Specific n-of-a-kind: how often does value 1 appear >= N times?
+    const freq1 = freq[1] || 0;
+    for (let n = 2; n <= numDice; n++) {
+        if (freq1 >= n) {
+            const sk = 'kind-' + n;
+            specificKind[sk] = (specificKind[sk] || 0) + 1;
+        }
+    }
+
+    // Specific straight: do values 1..N all appear?
+    for (let n = ms; n <= maxStraight; n++) {
+        let allPresent = true;
+        for (let v = 1; v <= n; v++) {
+            if (!present || !present.has(v)) { allPresent = false; break; }
+        }
+        if (allPresent) {
+            const sk = 'straight-' + n;
+            specificStraight[sk] = (specificStraight[sk] || 0) + 1;
+        }
+    }
+}
+
+/* ==============================================
+   PROBABILITY PAGE RENDERING
+   ============================================== */
+async function renderProbPage() {
+    const { dice, sides } = state.prob;
+    const minStraight = 3;
+    let result;
+    try {
+        if (backendAvailable !== false) {
+            result = await apiPost('/calculate-probabilities', { numDice: dice, numSides: sides, minStraight });
+        } else { throw 0; }
+    } catch {
+        result = calculateProbabilities(dice, sides, minStraight);
+    }
+    const { straightCounts, kindCounts, specificKind, specificStraight,
+            total, simulated, maxStraight, ms } = result;
+
+    // Build hand lists
+    const straightList = [];
+    for (let n = maxStraight; n >= ms; n--) straightList.push('straight-' + n);
+    straightList.push('no-straight');
+
+    const kindList = [];
+    for (let n = dice; n >= 2; n--) kindList.push('kind-' + n);
+    kindList.push('no-kind');
+
+    // Render straight table
+    renderCategoryTable('prob-straight-tbody', straightList, straightCounts, total);
+    // Render kind table
+    renderCategoryTable('prob-kind-tbody', kindList, kindCounts, total);
+    // Render charts
+    renderCategoryChart('prob-straight-chart', straightList, straightCounts, total);
+    renderCategoryChart('prob-kind-chart', kindList, kindCounts, total);
+
+    // Specific instance — build default key set and maintain order
+    const defaultKeys = [];
+    const instanceMap = {};
+    for (let n = maxStraight; n >= ms; n--) {
+        const k = 'straight-' + n;
+        defaultKeys.push(k);
+        instanceMap[k] = sides - n + 1;
+    }
+    for (let n = dice; n >= 2; n--) {
+        const k = 'kind-' + n;
+        defaultKeys.push(k);
+        instanceMap[k] = sides;
+    }
+
+    // Maintain user ordering
+    const defaultSet = new Set(defaultKeys);
+    if (state.prob.specificOrder) {
+        state.prob.specificOrder = state.prob.specificOrder.filter(k => defaultSet.has(k));
+        const existing = new Set(state.prob.specificOrder);
+        defaultKeys.forEach(k => { if (!existing.has(k)) state.prob.specificOrder.push(k); });
+    } else {
+        state.prob.specificOrder = [...defaultKeys];
+    }
+
+    // Cache data for renderSpecificProbs
+    const allSpecific = { ...specificStraight, ...specificKind };
+    _specificCache = { allSpecific, instanceMap, total };
+    renderSpecificProbs();
+
+    document.getElementById('prob-method').textContent =
+        simulated ? 'Monte Carlo (500K samples)' : 'Exact enumeration';
+    document.getElementById('prob-total').textContent =
+        'Total outcomes: ' + total.toLocaleString();
+}
+
+/* Specific instance probabilities — sortable rendering + drag */
+let _specificCache = null;
+let _specificDrag = null;
+
+function renderSpecificProbs() {
+    const list = document.getElementById('prob-specific-list');
+    list.innerHTML = '';
+    const order = state.prob.specificOrder;
+    if (!order || !_specificCache) return;
+    const { allSpecific, instanceMap, total } = _specificCache;
+    const maxSpecProb = Math.max(...order.map(k => (allSpecific[k] || 0) / total), 0.001);
+
+    order.forEach((key, i) => {
+        const count = allSpecific[key] || 0;
+        const prob = count / total;
+        const pct = prob * 100;
+        const barW = (prob / maxSpecProb) * 100;
+        const ht = handType(key);
+        const instances = instanceMap[key] || 0;
+
+        const div = document.createElement('div');
+        div.className = 'sortable-item row-fade-in';
+        div.style.animationDelay = (i * 40) + 'ms';
+        div.dataset.key = key;
+
+        div.innerHTML =
+            '<span class="drag-handle" onpointerdown="startSpecificDrag(event)">&#x2807;</span>' +
+            '<span class="sp-hand"><span class="hand-badge ' + ht + '">' + handLabel(key) + '</span></span>' +
+            '<span class="sp-prob">' + pct.toFixed(3) + '%</span>' +
+            '<span class="sp-inst">' + instances + '</span>' +
+            '<span class="sp-bar"><div class="prob-bar-wrap"><div class="prob-bar" style="width:0%"></div></div></span>';
+
+        list.appendChild(div);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                div.querySelector('.prob-bar').style.width = Math.max(barW, 0.5) + '%';
+            });
+        });
+    });
+}
+
+function startSpecificDrag(e) {
+    e.preventDefault();
+    const item = e.target.closest('.sortable-item');
+    const list = item.parentElement;
+
+    const clone = item.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.style.width = item.offsetWidth + 'px';
+    document.body.appendChild(clone);
+
+    item.classList.add('dragging');
+    clone.style.left = e.clientX - 20 + 'px';
+    clone.style.top = e.clientY - 20 + 'px';
+
+    _specificDrag = { item, clone, list };
+    e.target.setPointerCapture(e.pointerId);
+    e.target.addEventListener('pointermove', onSpecificDragMove);
+    e.target.addEventListener('pointerup', onSpecificDragEnd);
+}
+
+function onSpecificDragMove(e) {
+    if (!_specificDrag) return;
+    _specificDrag.clone.style.left = e.clientX - 20 + 'px';
+    _specificDrag.clone.style.top = e.clientY - 20 + 'px';
+
+    const items = [..._specificDrag.list.querySelectorAll('.sortable-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    for (const el of items) {
+        if (el === _specificDrag.item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid && e.clientY > rect.top - 10) {
+            el.classList.add('drag-over-top');
+            break;
+        }
+        if (e.clientY >= mid && e.clientY < rect.bottom + 10) {
+            el.classList.add('drag-over-bottom');
+            break;
+        }
+    }
+}
+
+function onSpecificDragEnd(e) {
+    if (!_specificDrag) return;
+    const { item, clone, list } = _specificDrag;
+    clone.remove();
+    item.classList.remove('dragging');
+
+    const items = [...list.querySelectorAll('.sortable-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    let dropIdx = -1;
+    for (let i = 0; i < items.length; i++) {
+        const el = items[i];
+        if (el === item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) { dropIdx = i; break; }
+    }
+    if (dropIdx === -1) dropIdx = items.length;
+
+    const key = item.dataset.key;
+    const order = state.prob.specificOrder;
+    const oldIdx = order.indexOf(key);
+    if (oldIdx >= 0) {
+        order.splice(oldIdx, 1);
+        const newIdx = dropIdx > oldIdx ? dropIdx - 1 : dropIdx;
+        order.splice(newIdx, 0, key);
+    }
+
+    _specificDrag = null;
+    e.target.removeEventListener('pointermove', onSpecificDragMove);
+    e.target.removeEventListener('pointerup', onSpecificDragEnd);
+    renderSpecificProbs();
+}
+
+function renderCategoryTable(tbodyId, handList, counts, total) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    const maxProb = Math.max(...handList.map(k => (counts[k] || 0) / total), 0.001);
+
+    handList.forEach((key, i) => {
+        const count = counts[key] || 0;
+        const prob = count / total;
+        const pct = prob * 100;
+        const barW = (prob / maxProb) * 100;
+        const ht = handType(key);
+
+        const tr = document.createElement('tr');
+        tr.className = 'row-fade-in';
+        tr.style.animationDelay = (i * 40) + 'ms';
+
+        tr.innerHTML =
+            '<td><span class="hand-badge ' + ht + '">' + handLabel(key) + '</span></td>' +
+            '<td class="td-count td-count-col">' + count.toLocaleString() + '</td>' +
+            '<td class="td-prob">' + pct.toFixed(3) + '%</td>' +
+            '<td class="bar-cell"><div class="prob-bar-wrap"><div class="prob-bar" style="width:0%"></div></div></td>';
+
+        tbody.appendChild(tr);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                tr.querySelector('.prob-bar').style.width = Math.max(barW, 0.5) + '%';
+            });
+        });
+    });
+}
+
+function renderCategoryChart(chartId, handList, counts, total) {
+    const chart = document.getElementById(chartId);
+    chart.innerHTML = '';
+    const maxProb = Math.max(...handList.map(k => (counts[k] || 0) / total), 0.001);
+
+    handList.forEach((key, i) => {
+        const count = counts[key] || 0;
+        const prob = count / total;
+        const pct = prob * 100;
+        const barW = (prob / maxProb) * 100;
+        const ht = handType(key);
+
+        const row = document.createElement('div');
+        row.className = 'hbar-row';
+        row.style.animation = 'rowSlideIn 0.35s ease both';
+        row.style.animationDelay = (i * 40) + 'ms';
+
+        const showInside = barW > 18;
+        row.innerHTML =
+            '<div class="hbar-label">' + handLabel(key) + '</div>' +
+            '<div class="hbar-track">' +
+                '<div class="hbar-fill ' + ht + '" style="width:0%">' +
+                    (showInside ? '<span class="hbar-value">' + pct.toFixed(2) + '%</span>' : '') +
+                '</div>' +
+            '</div>' +
+            (!showInside ? '<span class="hbar-value-outside">' + pct.toFixed(2) + '%</span>' : '');
+
+        chart.appendChild(row);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                row.querySelector('.hbar-fill').style.width = Math.max(barW, 0.5) + '%';
+            });
+        });
+    });
+}
+
+/* Config bar controls */
+function adjustProb(field, delta) {
+    if (field === 'dice') {
+        state.prob.dice = Math.max(2, Math.min(10, state.prob.dice + delta));
+        document.getElementById('prob-dice-val').textContent = state.prob.dice;
+    } else {
+        state.prob.sides = Math.max(4, Math.min(20, state.prob.sides + delta));
+        document.getElementById('prob-sides-val').textContent = state.prob.sides;
+    }
+    renderProbPage();
+}
+
+/* ==============================================
+   SIMULATOR — DICE RENDERING
+   ============================================== */
+const PIP_LAYOUTS = {
+    1: [0,0,0, 0,1,0, 0,0,0],
+    2: [0,0,1, 0,0,0, 1,0,0],
+    3: [0,0,1, 0,1,0, 1,0,0],
+    4: [1,0,1, 0,0,0, 1,0,1],
+    5: [1,0,1, 0,1,0, 1,0,1],
+    6: [1,0,1, 1,0,1, 1,0,1],
+};
+
+function renderDieFace(value, numSides) {
+    if (numSides === 6 && value >= 1 && value <= 6) {
+        const layout = PIP_LAYOUTS[value];
+        return '<div class="die-pips">' +
+            layout.map(p => p ? '<div><div class="pip"></div></div>' : '<div></div>').join('') +
+            '</div>';
+    }
+    return '<span class="die-number">' + value + '</span>';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ==============================================
+   HOLD'EM STATE
+   ============================================== */
+function buildDefaultRanking(sides, minStraight) {
+    // Unified ranking: interleaved by default (straights first, then kinds at same N)
+    const maxStraight = Math.min(5, sides);
+    const ranking = [];
+    // Straight-5, Kind-5, Straight-4, Kind-4, Straight-3, Kind-3, Kind-2
+    for (let n = 5; n >= 2; n--) {
+        if (n >= minStraight && n <= maxStraight) ranking.push('straight-' + n);
+        ranking.push('kind-' + n);
+    }
+    return ranking;
+}
+
+function buildDefaultSubValues(sides) {
+    const sv = {};
+    for (let n = 2; n <= 5; n++) {
+        sv['kind-' + n] = [];
+        for (let v = sides; v >= 1; v--) sv['kind-' + n].push(v);
+    }
+    return sv;
+}
+
+// Cached probabilities for ranking display
+let cachedHandProbs = {};
+function computeHandProbs(sides, minStraight) {
+    const key = sides + '-' + minStraight;
+    if (cachedHandProbs._key === key) return cachedHandProbs;
+    const result = calculateProbabilities(5, sides, minStraight);
+    const probs = {};
+    // Straights: "exactly longest run = N"
+    for (const [k, v] of Object.entries(result.straightCounts)) {
+        probs[k] = v / result.total;
+    }
+    // Kinds: "exactly max freq = N"
+    for (const [k, v] of Object.entries(result.kindCounts)) {
+        probs[k] = v / result.total;
+    }
+    // Specific sub-values
+    for (const [k, v] of Object.entries(result.specificKind)) {
+        probs['specific-' + k] = v / result.total;
+    }
+    cachedHandProbs = probs;
+    cachedHandProbs._key = key;
+    return probs;
+}
+
+const AI_PROFILE_DEFAULTS = Object.freeze({
+    TP: Object.freeze({ foldBelow: 0.5, raiseAbove: 0.8, checkBluff: 0.02, betBluff: 0.05, raiseMultiplier: 2 }),
+    TA: Object.freeze({ foldBelow: 0.4, raiseAbove: 0.55, checkBluff: 0.03, betBluff: 0.05, raiseMultiplier: 2 }),
+    LP: Object.freeze({ foldBelow: 0.15, raiseAbove: 0.7, checkBluff: 0.08, betBluff: 0.12, raiseMultiplier: 2 }),
+    LA: Object.freeze({ foldBelow: 0.2, raiseAbove: 0.4, checkBluff: 0.15, betBluff: 0.20, raiseMultiplier: 3 }),
+});
+
+state.holdem = {
+    numPlayers: 4,
+    strategies: ['human', 'TA', 'LP', 'LA'],
+    startChips: 100,
+    smallBlind: 1,
+    bigBlind: 2,
+    minStraight: 3,
+    sides: 6,
+    visibility: [false, false, false],
+    ranking: buildDefaultRanking(6, 3),
+    kindSubValues: buildDefaultSubValues(6),
+    disabledHands: {},
+    disabledSubValues: {},
+    // Game state
+    phase: 'idle',
+    players: [],
+    dealerDice: [0, 0],
+    pot: 0,
+    dealerPos: 0,
+    currentPlayer: -1,
+    currentBet: 0,
+    gameLog: [],
+    autoPlay: false,
+    autoPlayTimer: null,
+    // Multi-round session
+    session: null,
+    // AI profile overrides (mutable copy of AI_PROFILE_DEFAULTS)
+    aiProfiles: {
+        TP: { ...AI_PROFILE_DEFAULTS.TP },
+        TA: { ...AI_PROFILE_DEFAULTS.TA },
+        LP: { ...AI_PROFILE_DEFAULTS.LP },
+        LA: { ...AI_PROFILE_DEFAULTS.LA },
+    },
+};
+
+/* ==============================================
+   HAND COMPARATOR (Unified ranking)
+   ============================================== */
+function scoreHand(dice, config) {
+    const { maxKind, longestRun, freq } = classifyRoll(dice, config.sides);
+    const ms = config.minStraight || 3;
+    const ranking = config.ranking;
+
+    // Walk unified ranking, find best qualifying hand
+    let bestRank = -1;
+    let bestKey = null;
+    for (let i = 0; i < ranking.length; i++) {
+        const key = ranking[i];
+        if (config.disabledHands[key]) continue;
+        const [type, nStr] = key.split('-');
+        const n = parseInt(nStr);
+        let qualifies = false;
+        if (type === 'straight' && longestRun >= n) qualifies = true;
+        if (type === 'kind' && maxKind >= n) qualifies = true;
+        if (qualifies) {
+            bestRank = ranking.length - i; // higher = better
+            bestKey = key;
+            break;
+        }
+    }
+
+    // Sub-value for tiebreaking
+    let subValue = 0;
+    if (bestKey) {
+        const [type, nStr] = bestKey.split('-');
+        const n = parseInt(nStr);
+        if (type === 'kind') {
+            const subOrder = config.kindSubValues[bestKey] || [];
+            for (const [val, cnt] of Object.entries(freq)) {
+                if (cnt >= n) {
+                    const idx = subOrder.indexOf(parseInt(val));
+                    const sv = idx >= 0 ? subOrder.length - idx : 0;
+                    if (sv > subValue) subValue = sv;
+                }
+            }
+        } else {
+            // Straight sub-value: highest starting point of the qualifying run
+            const present = new Set(dice);
+            for (let start = config.sides; start >= 1; start--) {
+                let run = 0;
+                for (let v = start; v >= 1 && present.has(v); v--) run++;
+                if (run >= n) { subValue = start; break; }
+            }
+        }
+    }
+
+    // Second-best hand for additional tiebreaking
+    let secondRank = -1;
+    let secondSub = 0;
+    if (bestKey) {
+        const bestType = bestKey.split('-')[0];
+        for (let i = 0; i < ranking.length; i++) {
+            const key = ranking[i];
+            if (key === bestKey || config.disabledHands[key]) continue;
+            const [type, nStr] = key.split('-');
+            const n = parseInt(nStr);
+            // Only consider the OTHER category for second-best
+            if (type === bestType) continue;
+            let qualifies = false;
+            if (type === 'straight' && longestRun >= n) qualifies = true;
+            if (type === 'kind' && maxKind >= n) qualifies = true;
+            if (qualifies) {
+                secondRank = ranking.length - i;
+                if (type === 'kind') {
+                    const subOrder = config.kindSubValues[key] || [];
+                    for (const [val, cnt] of Object.entries(freq)) {
+                        if (cnt >= n) {
+                            const idx = subOrder.indexOf(parseInt(val));
+                            const sv = idx >= 0 ? subOrder.length - idx : 0;
+                            if (sv > secondSub) secondSub = sv;
+                        }
+                    }
+                } else {
+                    const present = new Set(dice);
+                    for (let start = config.sides; start >= 1; start--) {
+                        let run = 0;
+                        for (let v = start; v >= 1 && present.has(v); v--) run++;
+                        if (run >= n) { secondSub = start; break; }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    return [bestRank, subValue, secondRank, secondSub];
+}
+
+function compareHands(dice1, dice2, config) {
+    const s1 = scoreHand(dice1, config);
+    const s2 = scoreHand(dice2, config);
+    for (let i = 0; i < 4; i++) {
+        if (s1[i] > s2[i]) return 1;
+        if (s1[i] < s2[i]) return -1;
+    }
+    return 0;
+}
+
+function describeHand(dice, config) {
+    const hands = getHands(dice, config.sides, config.minStraight);
+    if (hands.length === 0) return 'Nothing';
+    return hands.map(h => handLabel(handKey(h))).join(' + ');
+}
+
+/* ==============================================
+   GAME ENGINE
+   ============================================== */
+const PHASES = ['idle','blinds','round1','bet1','round2','bet2','round3','bet3','showdown','done'];
+
+function rollOneDie(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+}
+
+function initPlayers() {
+    const h = state.holdem;
+    h.players = [];
+    for (let i = 0; i < h.numPlayers; i++) {
+        h.players.push({
+            name: i === 0 ? 'You' : 'Player ' + (i + 1),
+            strategy: h.strategies[i] || 'TA',
+            chips: h.startChips,
+            personalDice: [0, 0, 0],
+            folded: false,
+            currentBet: 0,
+            totalBet: 0,
+            allIn: false,
+            eliminated: false,
+        });
+    }
+}
+
+function startHoldemGame() {
+    const h = state.holdem;
+    // If a session is active, stop it
+    if (h.session && h.session.active) {
+        stopSession();
+        return;
+    }
+    initPlayers();
+    h.session = null;
+    h.dealerDice = [0, 0];
+    h.pot = 0;
+    h.currentBet = 0;
+    h.phase = 'blinds';
+    h.gameLog = [];
+    h.currentPlayer = -1;
+    addLog('--- New Game ---', 'phase');
+    advanceGame();
+}
+
+function addLog(msg, type) {
+    state.holdem.gameLog.push({ msg, type: type || 'normal' });
+}
+
+function activePlayers() {
+    return state.holdem.players.filter(p => !p.folded && !p.eliminated && p.chips > 0);
+}
+
+function activeNonAllIn() {
+    return state.holdem.players.filter(p => !p.folded && !p.eliminated && !p.allIn);
+}
+
+async function advanceGame() {
+    const h = state.holdem;
+    if (h.phase === 'idle' || h.phase === 'done') return;
+
+    if (h.phase === 'blinds') {
+        handleBlinds();
+        h.phase = 'round1';
+        renderHoldemBoard();
+        scheduleNext();
+        return;
+    }
+
+    if (h.phase === 'round1') {
+        handleRollRound(1);
+        h.phase = 'bet1';
+        h.currentBet = h.bigBlind;
+        resetBettingRound();
+        renderHoldemBoard();
+        scheduleNext();
+        return;
+    }
+
+    if (h.phase === 'round2') {
+        handleRollRound(2);
+        h.phase = 'bet2';
+        h.currentBet = 0;
+        resetBettingRound();
+        renderHoldemBoard();
+        scheduleNext();
+        return;
+    }
+
+    if (h.phase === 'round3') {
+        handleRollRound(3);
+        h.phase = 'bet3';
+        h.currentBet = 0;
+        resetBettingRound();
+        renderHoldemBoard();
+        scheduleNext();
+        return;
+    }
+
+    if (h.phase.startsWith('bet')) {
+        if (activePlayers().length <= 1) {
+            h.phase = 'showdown';
+            await advanceGame();
+            return;
+        }
+        const acted = await advanceBetting();
+        if (acted) {
+            renderHoldemBoard();
+            scheduleNext();
+        }
+        return;
+    }
+
+    if (h.phase === 'showdown') {
+        handleShowdown();
+        h.phase = 'done';
+        renderHoldemBoard();
+
+        // Multi-round session: check if session should continue
+        if (h.session && h.session.active) {
+            checkSessionContinue();
+            return;
+        }
+
+        document.getElementById('start-game-btn').disabled = false;
+        document.getElementById('next-step-btn').disabled = true;
+        stopAutoPlay();
+        return;
+    }
+}
+
+function scheduleNext() {
+    const h = state.holdem;
+    document.getElementById('next-step-btn').disabled = false;
+    document.getElementById('start-game-btn').disabled = true;
+    if (isWaitingForHuman()) {
+        showActionButtons();
+        return;
+    }
+    if (h.autoPlay || (h.session && h.session.active)) {
+        h.autoPlayTimer = setTimeout(() => advanceGame(), h.session && h.session.active ? 400 : 600);
+    }
+}
+
+function isWaitingForHuman() {
+    const h = state.holdem;
+    if (!h.phase.startsWith('bet')) return false;
+    if (h.currentPlayer >= 0 && h.currentPlayer < h.players.length) {
+        const p = h.players[h.currentPlayer];
+        return p.strategy === 'human' && !p.folded && !p.allIn;
+    }
+    return false;
+}
+
+function toggleAutoPlay() {
+    const h = state.holdem;
+    h.autoPlay = !h.autoPlay;
+    document.getElementById('auto-play-btn').textContent = h.autoPlay ? 'Pause' : 'Auto-Play';
+    if (h.autoPlay && h.phase !== 'idle' && h.phase !== 'done' && !isWaitingForHuman()) {
+        advanceGame(); // async, fire-and-forget is fine here
+    }
+}
+
+function stopAutoPlay() {
+    const h = state.holdem;
+    h.autoPlay = false;
+    if (h.autoPlayTimer) clearTimeout(h.autoPlayTimer);
+    h.autoPlayTimer = null;
+    document.getElementById('auto-play-btn').textContent = 'Auto-Play';
+}
+
+function nextAlivePlayer(fromPos) {
+    const h = state.holdem;
+    let pos = (fromPos + 1) % h.numPlayers;
+    let safety = 0;
+    while (safety < h.numPlayers) {
+        if (!h.players[pos].eliminated) return pos;
+        pos = (pos + 1) % h.numPlayers;
+        safety++;
+    }
+    return pos;
+}
+
+function handleBlinds() {
+    const h = state.holdem;
+    const sb = nextAlivePlayer(h.dealerPos);
+    const bb = nextAlivePlayer(sb);
+
+    const sbAmt = Math.min(h.smallBlind, h.players[sb].chips);
+    h.players[sb].chips -= sbAmt;
+    h.players[sb].currentBet = sbAmt;
+    h.players[sb].totalBet = sbAmt;
+    h.pot += sbAmt;
+
+    const bbAmt = Math.min(h.bigBlind, h.players[bb].chips);
+    h.players[bb].chips -= bbAmt;
+    h.players[bb].currentBet = bbAmt;
+    h.players[bb].totalBet = bbAmt;
+    h.pot += bbAmt;
+
+    h.currentBet = bbAmt;
+    addLog(h.players[sb].name + ' posts small blind (' + sbAmt + ')', 'normal');
+    addLog(h.players[bb].name + ' posts big blind (' + bbAmt + ')', 'normal');
+}
+
+function handleRollRound(round) {
+    const h = state.holdem;
+    const dieIdx = round - 1;
+
+    addLog('--- Round ' + round + ' ---', 'phase');
+
+    // Players roll their personal die
+    h.players.forEach((p, i) => {
+        if (!p.folded && !p.eliminated) {
+            p.personalDice[dieIdx] = rollOneDie(h.sides);
+            const vis = h.visibility[dieIdx];
+            if (vis) {
+                addLog(p.name + ' rolls: ' + p.personalDice[dieIdx]);
+            } else {
+                addLog(p.name + ' rolls (hidden)');
+            }
+        }
+    });
+
+    // Dealer rolls community die on rounds 2 and 3
+    if (round >= 2) {
+        h.dealerDice[round - 2] = rollOneDie(h.sides);
+        addLog('Dealer reveals: ' + h.dealerDice[round - 2], 'phase');
+    }
+}
+
+function resetBettingRound() {
+    const h = state.holdem;
+    h.players.forEach(p => { p.currentBet = 0; p._acted = false; });
+    // Start from left of dealer (skip eliminated)
+    h.currentPlayer = nextAlivePlayer(h.dealerPos);
+    // Skip folded/all-in
+    skipInactive();
+}
+
+function skipInactive() {
+    const h = state.holdem;
+    let loops = 0;
+    while (loops < h.numPlayers) {
+        const p = h.players[h.currentPlayer];
+        if (!p.folded && !p.allIn && !p.eliminated) return;
+        h.currentPlayer = (h.currentPlayer + 1) % h.numPlayers;
+        loops++;
+    }
+}
+
+async function advanceBetting() {
+    const h = state.holdem;
+
+    // Check if betting round is complete
+    const active = h.players.filter(p => !p.folded && !p.allIn);
+    if (active.length === 0 || active.every(p => p._acted && p.currentBet >= h.currentBet)) {
+        // Move to next phase
+        const betNum = parseInt(h.phase.replace('bet', ''));
+        if (betNum < 3) {
+            h.phase = 'round' + (betNum + 1);
+        } else {
+            h.phase = 'showdown';
+        }
+        h.players.forEach(p => { p.currentBet = 0; });
+        await advanceGame();
+        return false;
+    }
+
+    // Check if only 1 player left
+    if (activePlayers().length <= 1) {
+        h.phase = 'showdown';
+        await advanceGame();
+        return false;
+    }
+
+    const p = h.players[h.currentPlayer];
+    if (p.folded || p.allIn) {
+        h.currentPlayer = (h.currentPlayer + 1) % h.numPlayers;
+        skipInactive();
+        return advanceBetting();
+    }
+
+    // Human player — show action buttons and wait
+    if (p.strategy === 'human') {
+        renderHoldemBoard();
+        showActionButtons();
+        return false;
+    }
+
+    // AI decision (async — hand strength may call backend)
+    const action = await getAIAction(h.currentPlayer);
+    executeAction(h.currentPlayer, action.action, action.amount);
+    p._acted = true;
+
+    h.currentPlayer = (h.currentPlayer + 1) % h.numPlayers;
+    skipInactive();
+    return true;
+}
+
+function executeAction(playerIdx, action, amount) {
+    const h = state.holdem;
+    const p = h.players[playerIdx];
+
+    if (action === 'fold') {
+        p.folded = true;
+        addLog(p.name + ' folds');
+    } else if (action === 'check') {
+        addLog(p.name + ' checks');
+    } else if (action === 'call') {
+        const toCall = Math.min(h.currentBet - p.currentBet, p.chips);
+        p.chips -= toCall;
+        p.currentBet += toCall;
+        p.totalBet += toCall;
+        h.pot += toCall;
+        if (p.chips === 0) p.allIn = true;
+        addLog(p.name + ' calls' + (p.allIn ? ' (all-in)' : '') + ' ' + toCall);
+    } else if (action === 'raise') {
+        const raiseAmt = Math.min(amount || h.bigBlind * 2, p.chips + p.currentBet);
+        const toAdd = raiseAmt - p.currentBet;
+        const actual = Math.min(toAdd, p.chips);
+        p.chips -= actual;
+        p.currentBet += actual;
+        p.totalBet += actual;
+        h.pot += actual;
+        h.currentBet = p.currentBet;
+        if (p.chips === 0) p.allIn = true;
+        // Reset _acted for others since there's a raise
+        h.players.forEach((op, i) => { if (i !== playerIdx && !op.folded && !op.allIn) op._acted = false; });
+        addLog(p.name + ' raises to ' + p.currentBet + (p.allIn ? ' (all-in)' : ''));
+    }
+}
+
+async function humanAction(action, amount) {
+    const h = state.holdem;
+    const p = h.players[h.currentPlayer];
+    if (p.strategy !== 'human') return;
+
+    executeAction(h.currentPlayer, action, amount);
+    p._acted = true;
+    h.currentPlayer = (h.currentPlayer + 1) % h.numPlayers;
+    skipInactive();
+    document.getElementById('action-bar').style.display = 'none';
+    await advanceGame();
+}
+
+function handleShowdown() {
+    const h = state.holdem;
+    addLog('--- Showdown ---', 'phase');
+
+    const remaining = h.players.filter(p => !p.folded);
+
+    if (remaining.length === 1) {
+        const winner = remaining[0];
+        winner.chips += h.pot;
+        addLog(winner.name + ' wins ' + h.pot + ' chips (everyone else folded)', 'result');
+        h.pot = 0;
+        return;
+    }
+
+    // Combine personal dice + dealer dice for each remaining player
+    const config = getHoldemConfig();
+    let bestScore = null;
+    let winners = [];
+
+    remaining.forEach(p => {
+        const fullHand = [...p.personalDice, ...h.dealerDice];
+        const desc = describeHand(fullHand, config);
+        addLog(p.name + ': [' + fullHand.join(', ') + '] — ' + desc);
+
+        if (!bestScore) {
+            bestScore = fullHand;
+            winners = [p];
+        } else {
+            const cmp = compareHands(fullHand, bestScore, config);
+            if (cmp > 0) {
+                bestScore = fullHand;
+                winners = [p];
+            } else if (cmp === 0) {
+                winners.push(p);
+            }
+        }
+    });
+
+    const share = Math.floor(h.pot / winners.length);
+    const remainder = h.pot - share * winners.length;
+    winners.forEach((w, i) => { w.chips += share + (i === 0 ? remainder : 0); });
+
+    if (winners.length === 1) {
+        addLog(winners[0].name + ' wins ' + h.pot + ' chips!', 'result');
+    } else {
+        addLog('Split pot! ' + winners.map(w => w.name).join(', ') + ' each get ' + share, 'result');
+    }
+    h.pot = 0;
+}
+
+/* ==============================================
+   MULTI-ROUND SESSION
+   ============================================== */
+function startSession() {
+    const h = state.holdem;
+    // Toggle: if session is active, stop it
+    if (h.session && h.session.active) {
+        stopSession();
+        return;
+    }
+    initPlayers();
+    h.session = {
+        active: true,
+        roundNumber: 0,
+        startingChips: h.players.map(p => p.chips),
+        eliminations: [],
+        roundLog: [],
+    };
+    h.gameLog = [];
+    h.autoPlay = true;
+    document.getElementById('auto-play-btn').textContent = 'Pause';
+    document.getElementById('start-game-btn').disabled = true;
+    document.getElementById('start-session-btn').textContent = 'Stop Session';
+    addLog('=== Session Started ===', 'phase');
+    renderSessionStatus();
+    startNextRound();
+}
+
+function stopSession() {
+    const h = state.holdem;
+    if (h.session) h.session.active = false;
+    stopAutoPlay();
+    document.getElementById('start-game-btn').disabled = false;
+    document.getElementById('start-session-btn').textContent = 'Start Session';
+    document.getElementById('next-step-btn').disabled = true;
+    renderSessionStatus();
+}
+
+function startNextRound() {
+    const h = state.holdem;
+    h.dealerDice = [0, 0];
+    h.pot = 0;
+    h.currentBet = 0;
+    h.currentPlayer = -1;
+
+    // Rotate dealer to next alive player
+    let nextD = (h.dealerPos + 1) % h.numPlayers;
+    let safety = 0;
+    while (h.players[nextD] && h.players[nextD].eliminated && safety < h.numPlayers) {
+        nextD = (nextD + 1) % h.numPlayers;
+        safety++;
+    }
+    h.dealerPos = nextD;
+
+    // Reset per-round player state, keep chips
+    h.players.forEach(p => {
+        p.personalDice = [0, 0, 0];
+        p.folded = !!p.eliminated;
+        p.currentBet = 0;
+        p.totalBet = 0;
+        p.allIn = false;
+        p._acted = false;
+    });
+
+    h.session.roundNumber++;
+    h.phase = 'blinds';
+    addLog('--- Round ' + h.session.roundNumber + ' ---', 'phase');
+    advanceGame();
+}
+
+function checkSessionContinue() {
+    const h = state.holdem;
+    if (!h.session || !h.session.active) {
+        document.getElementById('start-game-btn').disabled = false;
+        document.getElementById('next-step-btn').disabled = true;
+        stopAutoPlay();
+        return;
+    }
+
+    // Check for eliminations
+    h.players.forEach((p, i) => {
+        if (!p.eliminated && p.chips <= 0) {
+            p.eliminated = true;
+            p.chips = 0;
+            h.session.eliminations.push({
+                player: p.name,
+                round: h.session.roundNumber,
+                position: h.session.eliminations.length + 1,
+            });
+            addLog(p.name + ' has been eliminated!', 'result');
+        }
+    });
+
+    const alive = h.players.filter(p => !p.eliminated);
+
+    if (alive.length <= 1) {
+        // Session complete
+        h.session.active = false;
+        const winner = alive[0];
+        addLog('=== ' + (winner ? winner.name : 'Nobody') + ' wins the session! ===', 'result');
+        addLog('Rounds played: ' + h.session.roundNumber, 'phase');
+        h.session.eliminations.forEach((e, i) => {
+            addLog('Eliminated #' + (i + 1) + ': ' + e.player + ' (Round ' + e.round + ')', 'normal');
+        });
+        h.phase = 'done';
+        renderHoldemBoard();
+        renderSessionStatus();
+        document.getElementById('start-game-btn').disabled = false;
+        document.getElementById('start-session-btn').textContent = 'Start Session';
+        document.getElementById('next-step-btn').disabled = true;
+        stopAutoPlay();
+        return;
+    }
+
+    // Continue to next round after a short delay
+    renderHoldemBoard();
+    renderSessionStatus();
+    setTimeout(() => startNextRound(), 800);
+}
+
+function renderSessionStatus() {
+    const h = state.holdem;
+    const el = document.getElementById('session-status');
+    if (!el) return;
+    if (!h.session) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const alive = h.players.filter(p => !p.eliminated);
+    let html = '<div class="session-info">';
+    html += '<span class="session-round">Round ' + h.session.roundNumber + '</span>';
+    html += '<span class="session-alive">' + alive.length + '/' + h.numPlayers + ' alive</span>';
+    if (h.session.eliminations.length > 0) {
+        html += '<span class="session-elims">Eliminated: ' +
+            h.session.eliminations.map(e => e.player).join(', ') + '</span>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+}
+
+function showActionButtons() {
+    const h = state.holdem;
+    const p = h.players[h.currentPlayer];
+    const bar = document.getElementById('action-bar');
+    const toCall = h.currentBet - p.currentBet;
+    const canCheck = toCall <= 0;
+    const minRaise = h.currentBet + h.bigBlind;
+
+    let html = '';
+    if (canCheck) {
+        html += '<button class="action-btn" onclick="humanAction(\'check\')">Check</button>';
+    } else {
+        html += '<button class="action-btn" onclick="humanAction(\'call\')">Call ' + Math.min(toCall, p.chips) + '</button>';
+    }
+    html += '<button class="action-btn action-raise" onclick="humanAction(\'raise\', parseInt(document.getElementById(\'raise-amt\').value))">Raise to</button>';
+    html += '<input class="raise-input" type="number" id="raise-amt" value="' + Math.min(minRaise, p.chips + p.currentBet) + '" min="' + minRaise + '" max="' + (p.chips + p.currentBet) + '">';
+    html += '<button class="action-btn action-fold" onclick="humanAction(\'fold\')">Fold</button>';
+
+    bar.innerHTML = html;
+    bar.style.display = 'flex';
+}
+
+function getHoldemConfig() {
+    const h = state.holdem;
+    return {
+        sides: h.sides,
+        minStraight: h.minStraight,
+        ranking: h.ranking,
+        kindSubValues: h.kindSubValues,
+        disabledHands: h.disabledHands,
+        disabledSubValues: h.disabledSubValues,
+    };
+}
+
+/* ==============================================
+   AI DECISION MAKING
+   ============================================== */
+function estimateHandStrengthLocal(playerIdx) {
+    const h = state.holdem;
+    const p = h.players[playerIdx];
+    const config = getHoldemConfig();
+    const samples = 100;
+    let wins = 0;
+    const knownPersonal = p.personalDice.filter(d => d > 0);
+    const unknownPersonal = 3 - knownPersonal.length;
+    const knownDealer = h.dealerDice.filter(d => d > 0);
+    const unknownDealer = 2 - knownDealer.length;
+
+    for (let s = 0; s < samples; s++) {
+        const myHand = [...knownPersonal];
+        for (let d = 0; d < unknownPersonal; d++) myHand.push(rollOneDie(h.sides));
+        const dealerComplete = [...knownDealer];
+        for (let d = 0; d < unknownDealer; d++) dealerComplete.push(rollOneDie(h.sides));
+        const myFull = [...myHand, ...dealerComplete];
+        const oppHand = [];
+        for (let d = 0; d < 3; d++) oppHand.push(rollOneDie(h.sides));
+        const oppFull = [...oppHand, ...dealerComplete];
+        const cmp = compareHands(myFull, oppFull, config);
+        if (cmp > 0) wins++;
+        else if (cmp === 0) wins += 0.5;
+    }
+    return wins / samples;
+}
+
+async function estimateHandStrength(playerIdx) {
+    const h = state.holdem;
+    const p = h.players[playerIdx];
+    try {
+        if (backendAvailable) {
+            const config = getHoldemConfig();
+            const r = await apiPost('/hand-strength', {
+                knownPersonal: p.personalDice.filter(d => d > 0),
+                knownDealer: h.dealerDice.filter(d => d > 0),
+                sides: h.sides, minStraight: h.minStraight,
+                ranking: config.ranking, kindSubValues: config.kindSubValues,
+                disabledHands: Object.keys(config.disabledHands),
+                numSamples: 100,
+            });
+            return r.strength;
+        }
+    } catch {}
+    return estimateHandStrengthLocal(playerIdx);
+}
+
+async function getAIAction(playerIdx) {
+    const h = state.holdem;
+    const p = h.players[playerIdx];
+    const strat = p.strategy;
+    const prof = h.aiProfiles[strat] || h.aiProfiles.TA;
+    const strength = await estimateHandStrength(playerIdx);
+    const toCall = h.currentBet - p.currentBet;
+    const canCheck = toCall <= 0;
+
+    // Bluff logic: when hand is weak, occasionally bluff-raise or bluff-call
+    if (strength < prof.foldBelow) {
+        if (canCheck) {
+            if (Math.random() < prof.checkBluff) {
+                const raiseAmt = h.currentBet + h.bigBlind * prof.raiseMultiplier;
+                return { action: 'raise', amount: Math.min(raiseAmt, p.chips + p.currentBet), isBluff: true };
+            }
+            return { action: 'check', isBluff: false };
+        }
+        // Probabilistic bluff-call: call with probability = strength
+        if (Math.random() < strength) {
+            return { action: 'call', isBluff: false, isBluffCall: true };
+        }
+        // Occasional bluff-raise
+        if (Math.random() < prof.betBluff) {
+            const raiseAmt = h.currentBet + h.bigBlind * prof.raiseMultiplier;
+            return { action: 'raise', amount: Math.min(raiseAmt, p.chips + p.currentBet), isBluff: true };
+        }
+        return { action: 'fold' };
+    }
+
+    if (strength >= prof.raiseAbove) {
+        const raiseAmt = h.currentBet + h.bigBlind * prof.raiseMultiplier;
+        return { action: 'raise', amount: Math.min(raiseAmt, p.chips + p.currentBet), isBluff: false };
+    }
+
+    if (canCheck) return { action: 'check', isBluff: false };
+    return { action: 'call', isBluff: false };
+}
+
+/* ==============================================
+   SIMULATOR MODE SWITCH
+   ============================================== */
+function switchSimMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('mode-' + mode).classList.add('active');
+}
+
+/* ==============================================
+   HOLD'EM RENDERER
+   ============================================== */
+function renderHoldemBoard() {
+    const h = state.holdem;
+    const config = getHoldemConfig();
+
+    // Dealer dice
+    const dd = document.getElementById('dealer-dice');
+    dd.innerHTML = '';
+    for (let i = 0; i < 2; i++) {
+        const die = document.createElement('div');
+        die.className = 'die' + (h.dealerDice[i] === 0 ? ' empty' : '');
+        if (h.dealerDice[i] > 0) {
+            die.innerHTML = renderDieFace(h.dealerDice[i], h.sides);
+        } else {
+            die.innerHTML = '<span class="die-placeholder">?</span>';
+        }
+        dd.appendChild(die);
+    }
+
+    // Pot
+    document.getElementById('pot-amount').textContent = h.pot;
+
+    // Players
+    const pa = document.getElementById('players-area');
+    pa.innerHTML = '';
+    h.players.forEach((p, i) => {
+        const row = document.createElement('div');
+        const isHuman = p.strategy === 'human';
+        const isTurn = i === h.currentPlayer && h.phase.startsWith('bet');
+        row.className = 'player-row' +
+            (p.eliminated ? ' eliminated' : p.folded ? ' folded' : '') +
+            (isHuman ? ' is-human' : '') +
+            (isTurn ? ' active-turn' : '');
+
+        // Player info
+        const info = '<div class="player-info">' +
+            '<span class="player-name">' + p.name + (i === h.dealerPos ? ' (D)' : '') + '</span>' +
+            '<span class="strategy-badge ' + (isHuman ? 'human' : p.strategy.toLowerCase()) + '">' +
+            (isHuman ? 'Human' : p.strategy) + '</span></div>';
+
+        // Dice
+        let diceHtml = '<div class="player-dice">';
+        for (let d = 0; d < 3; d++) {
+            const val = p.personalDice[d];
+            const visible = isHuman || h.visibility[d] || h.phase === 'showdown' || h.phase === 'done';
+            if (val === 0) {
+                diceHtml += '<div class="die empty"><span class="die-placeholder">?</span></div>';
+            } else if (visible) {
+                diceHtml += '<div class="die">' + renderDieFace(val, h.sides) + '</div>';
+            } else {
+                diceHtml += '<div class="die hidden-die"><span class="die-number">?</span></div>';
+            }
+        }
+        diceHtml += '</div>';
+
+        const betInfo = p.currentBet > 0 ? '<div class="player-bet">Bet: ' + p.currentBet + '</div>' : '<div class="player-bet"></div>';
+        const chips = '<div class="player-chips">' + (p.eliminated ? 'OUT' : p.chips) + '</div>';
+
+        row.innerHTML = info + diceHtml + betInfo + chips;
+        pa.appendChild(row);
+    });
+
+    // Game log
+    renderGameLog();
+}
+
+function renderGameLog() {
+    const el = document.getElementById('log-entries');
+    el.innerHTML = '';
+    state.holdem.gameLog.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'log-entry' + (entry.type === 'phase' ? ' log-phase' : '') + (entry.type === 'result' ? ' log-result' : '');
+        div.textContent = entry.msg;
+        el.appendChild(div);
+    });
+    el.scrollTop = el.scrollHeight;
+}
+
+/* ==============================================
+   SETTINGS & SIDEBAR
+   ============================================== */
+function updateHoldemSetting() {
+    const h = state.holdem;
+    h.numPlayers = +document.getElementById('he-num-players').value;
+    h.sides = +document.getElementById('he-sides').value;
+    h.startChips = +document.getElementById('he-start-chips').value;
+    h.smallBlind = +document.getElementById('he-sb').value;
+    h.bigBlind = +document.getElementById('he-bb').value;
+    h.minStraight = +document.getElementById('he-min-straight').value;
+
+    document.getElementById('he-num-players-val').textContent = h.numPlayers;
+    document.getElementById('he-sides-val').textContent = h.sides;
+    document.getElementById('he-start-chips-val').textContent = h.startChips;
+    document.getElementById('he-min-straight-val').textContent = h.minStraight;
+
+    // Adjust strategies array
+    while (h.strategies.length < h.numPlayers) h.strategies.push('TA');
+    h.strategies.length = h.numPlayers;
+
+    // Rebuild rankings - preserve user order for still-valid hands
+    const newDefault = buildDefaultRanking(h.sides, h.minStraight);
+    const newSet = new Set(newDefault);
+    const kept = h.ranking.filter(k => newSet.has(k));
+    const keptSet = new Set(kept);
+    const added = newDefault.filter(k => !keptSet.has(k));
+    h.ranking = [...kept, ...added];
+    h.kindSubValues = buildDefaultSubValues(h.sides);
+
+    renderPlayerConfig();
+    renderVisToggles();
+    renderRankingEditor();
+}
+
+/* ==============================================
+   AI PROFILE EDITOR
+   ============================================== */
+const AI_PROFILE_PARAMS = [
+    { key: 'foldBelow',        label: 'Fold Threshold',  desc: 'Fold when hand strength below this', min: 0, max: 0.8,  step: 0.05 },
+    { key: 'raiseAbove',       label: 'Raise Threshold', desc: 'Raise when hand strength above this', min: 0.3, max: 1.0, step: 0.05 },
+    { key: 'checkBluff',       label: 'Check Bluff %',   desc: 'Bluff-raise chance when able to check', min: 0, max: 0.30, step: 0.01 },
+    { key: 'betBluff',         label: 'Bet Bluff %',     desc: 'Bluff-raise chance when facing a bet',  min: 0, max: 0.40, step: 0.01 },
+    { key: 'raiseMultiplier',  label: 'Raise Size (BB)', desc: 'Big blinds added when raising',          min: 1, max: 5,    step: 1 },
+];
+
+function renderAIProfileEditor() {
+    const key = document.getElementById('ai-profile-select').value;
+    const prof = state.holdem.aiProfiles[key];
+    const el = document.getElementById('ai-profile-editor');
+    let html = '';
+    for (const p of AI_PROFILE_PARAMS) {
+        const val = prof[p.key];
+        const displayVal = p.step < 1 ? (val * 100).toFixed(0) + '%' : val;
+        html += '<div class="setting">' +
+            '<div class="setting-label" title="' + p.desc + '">' + p.label + '</div>' +
+            '<div class="setting-row">' +
+            '<input type="range" min="' + p.min + '" max="' + p.max + '" step="' + p.step + '" value="' + val + '" ' +
+            'oninput="updateAIProfile(\'' + key + '\',\'' + p.key + '\',+this.value)">' +
+            '<span class="setting-val" id="aip-' + key + '-' + p.key + '">' + displayVal + '</span>' +
+            '</div></div>';
+    }
+    el.innerHTML = html;
+    updateAIProfileWarning(key);
+}
+
+function updateAIProfile(profileKey, param, value) {
+    state.holdem.aiProfiles[profileKey][param] = value;
+    const paramDef = AI_PROFILE_PARAMS.find(p => p.key === param);
+    const display = paramDef && paramDef.step < 1 ? (value * 100).toFixed(0) + '%' : value;
+    const valEl = document.getElementById('aip-' + profileKey + '-' + param);
+    if (valEl) valEl.textContent = display;
+    updateAIProfileWarning(profileKey);
+}
+
+function resetAIProfile() {
+    const key = document.getElementById('ai-profile-select').value;
+    state.holdem.aiProfiles[key] = { ...AI_PROFILE_DEFAULTS[key] };
+    renderAIProfileEditor();
+}
+
+function updateAIProfileWarning(key) {
+    const prof = state.holdem.aiProfiles[key];
+    const warn = document.getElementById('ai-profile-warning');
+    if (warn) warn.style.display = prof.foldBelow >= prof.raiseAbove ? 'block' : 'none';
+}
+
+function renderPlayerConfig() {
+    const h = state.holdem;
+    const el = document.getElementById('player-config');
+    el.innerHTML = '';
+    for (let i = 0; i < h.numPlayers; i++) {
+        const isFirst = i === 0;
+        const div = document.createElement('div');
+        div.className = 'player-config-row';
+        div.innerHTML =
+            '<span class="player-config-name">' + (isFirst ? 'You' : 'P' + (i + 1)) + '</span>' +
+            '<select onchange="state.holdem.strategies[' + i + ']=this.value">' +
+            '<option value="human"' + (h.strategies[i] === 'human' ? ' selected' : '') + '>Human</option>' +
+            '<option value="TP"' + (h.strategies[i] === 'TP' ? ' selected' : '') + '>Tight-Passive</option>' +
+            '<option value="TA"' + (h.strategies[i] === 'TA' ? ' selected' : '') + '>Tight-Aggressive</option>' +
+            '<option value="LP"' + (h.strategies[i] === 'LP' ? ' selected' : '') + '>Loose-Passive</option>' +
+            '<option value="LA"' + (h.strategies[i] === 'LA' ? ' selected' : '') + '>Loose-Aggressive</option>' +
+            '</select>';
+        el.appendChild(div);
+    }
+}
+
+function renderVisToggles() {
+    const h = state.holdem;
+    const el = document.getElementById('vis-toggles');
+    el.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const div = document.createElement('div');
+        div.className = 'vis-toggle-row';
+        div.innerHTML =
+            '<span class="vis-toggle-label">Round ' + (i + 1) + ' dice</span>' +
+            '<label class="toggle-switch">' +
+            '<input type="checkbox" ' + (h.visibility[i] ? 'checked' : '') + ' onchange="state.holdem.visibility[' + i + ']=this.checked">' +
+            '<span class="toggle-slider"></span></label>';
+        el.appendChild(div);
+    }
+}
+
+/* ==============================================
+   HAND RANKING EDITOR
+   ============================================== */
+function renderRankingEditor() {
+    const h = state.holdem;
+    const probs = computeHandProbs(h.sides, h.minStraight);
+
+    // Render compact version in sidebar
+    const el = document.getElementById('ranking-editor');
+    el.innerHTML = buildRankingListHTML(h, probs, false) +
+        '<button class="ranking-expand-btn" onclick="openRankingOverlay()">Expand Full View</button>';
+
+    // Render full version in overlay
+    const fullEl = document.getElementById('ranking-editor-full');
+    if (fullEl) {
+        fullEl.innerHTML = buildRankingListHTML(h, probs, true);
+    }
+}
+
+function buildRankingListHTML(h, probs, showSubValues) {
+    let html = '<div class="sortable-list" id="' + (showSubValues ? 'rank-full-list' : 'rank-sidebar-list') + '">';
+    h.ranking.forEach((key, i) => {
+        const disabled = h.disabledHands[key];
+        const ht = handType(key);
+        const prob = probs[key] || 0;
+        const probStr = (prob * 100).toFixed(1) + '%';
+
+        html += '<div class="sortable-item' + (disabled ? ' disabled' : '') + '" data-key="' + key + '">';
+        html += '<span class="drag-handle" onpointerdown="startDrag(event)">&#x2807;</span>';
+        html += '<span class="sortable-rank">' + (i + 1) + '</span>';
+        html += '<span class="hand-badge ' + ht + '">' + handLabel(key) + '</span>';
+        html += '<span class="hand-prob">' + probStr + '</span>';
+        html += '<label class="hand-toggle toggle-switch"><input type="checkbox" ' + (disabled ? '' : 'checked') +
+            ' onchange="toggleHand(\'' + key + '\',this.checked)"><span class="toggle-slider"></span></label>';
+        html += '</div>';
+
+        // Sub-values (only in full view for kind hands)
+        if (showSubValues && ht === 'kind' && h.kindSubValues[key]) {
+            const n = parseInt(key.split('-')[1]);
+            const specProb = probs['specific-' + key] || 0;
+            const specProbStr = (specProb * 100).toFixed(2) + '%';
+            html += '<div class="sub-values" id="sub-' + key + '">';
+            h.kindSubValues[key].forEach(val => {
+                const svKey = key + ':' + val;
+                const svDis = h.disabledSubValues[svKey];
+                html += '<div class="sub-value-item' + (svDis ? ' disabled' : '') + '" data-key="' + svKey + '">';
+                html += '<span class="drag-handle" onpointerdown="startSubDrag(event,\'' + key + '\')">&#x2807;</span>';
+                html += '<span style="font-size:13px">' + n + 'x ' + val + '\'s</span>';
+                html += '<span class="sv-prob">' + specProbStr + '</span>';
+                html += '<label class="hand-toggle toggle-switch" style="margin-left:auto"><input type="checkbox" ' +
+                    (svDis ? '' : 'checked') + ' onchange="toggleSubValue(\'' + svKey + '\',this.checked)"><span class="toggle-slider"></span></label>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+    });
+    html += '</div>';
+    return html;
+}
+
+function openRankingOverlay() {
+    renderRankingEditor();
+    document.getElementById('ranking-overlay').classList.add('active');
+}
+
+function closeRankingOverlay() {
+    document.getElementById('ranking-overlay').classList.remove('active');
+}
+
+function toggleHand(key, enabled) {
+    if (enabled) {
+        delete state.holdem.disabledHands[key];
+    } else {
+        state.holdem.disabledHands[key] = true;
+    }
+}
+
+function toggleSubValue(svKey, enabled) {
+    if (enabled) {
+        delete state.holdem.disabledSubValues[svKey];
+    } else {
+        state.holdem.disabledSubValues[svKey] = true;
+    }
+}
+
+/* Drag-and-drop for unified ranking list */
+let dragState = null;
+
+function startDrag(e) {
+    e.preventDefault();
+    const item = e.target.closest('.sortable-item');
+    const list = item.parentElement;
+
+    const clone = item.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.style.width = item.offsetWidth + 'px';
+    document.body.appendChild(clone);
+
+    item.classList.add('dragging');
+    clone.style.left = e.clientX - 20 + 'px';
+    clone.style.top = e.clientY - 20 + 'px';
+
+    dragState = { item, clone, list };
+    e.target.setPointerCapture(e.pointerId);
+    e.target.addEventListener('pointermove', onDragMove);
+    e.target.addEventListener('pointerup', onDragEnd);
+}
+
+function onDragMove(e) {
+    if (!dragState) return;
+    dragState.clone.style.left = e.clientX - 20 + 'px';
+    dragState.clone.style.top = e.clientY - 20 + 'px';
+
+    const items = [...dragState.list.querySelectorAll('.sortable-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    for (const el of items) {
+        if (el === dragState.item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid && e.clientY > rect.top - 10) {
+            el.classList.add('drag-over-top');
+            break;
+        }
+        if (e.clientY >= mid && e.clientY < rect.bottom + 10) {
+            el.classList.add('drag-over-bottom');
+            break;
+        }
+    }
+}
+
+function onDragEnd(e) {
+    if (!dragState) return;
+    const { item, clone, list } = dragState;
+    clone.remove();
+    item.classList.remove('dragging');
+
+    const items = [...list.querySelectorAll('.sortable-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    let dropIdx = -1;
+    for (let i = 0; i < items.length; i++) {
+        const el = items[i];
+        if (el === item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) { dropIdx = i; break; }
+    }
+    if (dropIdx === -1) dropIdx = items.length;
+
+    const key = item.dataset.key;
+    const h = state.holdem;
+    const oldIdx = h.ranking.indexOf(key);
+    if (oldIdx >= 0) {
+        h.ranking.splice(oldIdx, 1);
+        const newIdx = dropIdx > oldIdx ? dropIdx - 1 : dropIdx;
+        h.ranking.splice(newIdx, 0, key);
+    }
+
+    dragState = null;
+    e.target.removeEventListener('pointermove', onDragMove);
+    e.target.removeEventListener('pointerup', onDragEnd);
+    renderRankingEditor();
+}
+
+function startSubDrag(e, parentKey) {
+    e.preventDefault();
+    const item = e.target.closest('.sub-value-item');
+    const list = item.parentElement;
+    const items = [...list.querySelectorAll('.sub-value-item')];
+    const startIdx = items.indexOf(item);
+
+    const clone = item.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.style.width = item.offsetWidth + 'px';
+    document.body.appendChild(clone);
+
+    item.classList.add('dragging');
+    clone.style.left = e.clientX - 20 + 'px';
+    clone.style.top = e.clientY - 20 + 'px';
+
+    dragState = { item, clone, list, parentKey, startIdx, isSub: true };
+    e.target.setPointerCapture(e.pointerId);
+    e.target.addEventListener('pointermove', onSubDragMove);
+    e.target.addEventListener('pointerup', onSubDragEnd);
+}
+
+function onSubDragMove(e) {
+    if (!dragState) return;
+    dragState.clone.style.left = e.clientX - 20 + 'px';
+    dragState.clone.style.top = e.clientY - 20 + 'px';
+
+    const items = [...dragState.list.querySelectorAll('.sub-value-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    for (const el of items) {
+        if (el === dragState.item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid && e.clientY > rect.top - 10) { el.classList.add('drag-over-top'); break; }
+        if (e.clientY >= mid && e.clientY < rect.bottom + 10) { el.classList.add('drag-over-bottom'); break; }
+    }
+}
+
+function onSubDragEnd(e) {
+    if (!dragState) return;
+    const { item, clone, list, parentKey } = dragState;
+    clone.remove();
+    item.classList.remove('dragging');
+
+    const items = [...list.querySelectorAll('.sub-value-item')];
+    items.forEach(el => { el.classList.remove('drag-over-top', 'drag-over-bottom'); });
+
+    let dropIdx = -1;
+    for (let i = 0; i < items.length; i++) {
+        const el = items[i];
+        if (el === item) continue;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) { dropIdx = i; break; }
+    }
+    if (dropIdx === -1) dropIdx = items.length;
+
+    const svKey = item.dataset.key;
+    const val = parseInt(svKey.split(':')[1]);
+    const h = state.holdem;
+    const subArr = h.kindSubValues[parentKey];
+    if (subArr) {
+        const oldIdx = subArr.indexOf(val);
+        if (oldIdx >= 0) {
+            subArr.splice(oldIdx, 1);
+            const newIdx = dropIdx > oldIdx ? dropIdx - 1 : dropIdx;
+            subArr.splice(newIdx, 0, val);
+        }
+    }
+
+    dragState = null;
+    e.target.removeEventListener('pointermove', onSubDragMove);
+    e.target.removeEventListener('pointerup', onSubDragEnd);
+    renderRankingEditor();
+}
+
+/* ==============================================
+   BATCH HOLD'EM SIMULATION
+   ============================================== */
+async function runHoldemBatch() {
+    const h = state.holdem;
+    const numGames = Math.min(Math.max(+document.getElementById('holdem-batch-count').value || 1000, 10), 100000);
+    const btn = document.getElementById('holdem-batch-btn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+
+    const output = document.getElementById('holdem-batch-output');
+    output.innerHTML = '<div class="batch-progress">Simulating ' + numGames.toLocaleString() + ' games...</div>';
+
+    const config = getHoldemConfig();
+    const numP = h.numPlayers;
+    const strategies = h.strategies.slice(0, numP);
+
+    // Try Python backend first
+    let result = null;
+    try {
+        if (backendAvailable === null) await checkBackend();
+        if (backendAvailable) {
+            result = await apiPost('/batch-simulate', {
+                numGames,
+                numPlayers: numP,
+                strategies: strategies.map(s => s === 'human' ? 'TA' : s),
+                startChips: h.startChips,
+                smallBlind: h.smallBlind,
+                bigBlind: h.bigBlind,
+                sides: h.sides,
+                minStraight: h.minStraight,
+                ranking: config.ranking,
+                kindSubValues: config.kindSubValues,
+                disabledHands: Object.keys(config.disabledHands || {}),
+                disabledSubValues: Object.keys(config.disabledSubValues || {}),
+                visibility: h.visibility,
+                aiProfiles: h.aiProfiles,
+            });
+        }
+    } catch (e) {
+        console.warn('Backend batch failed, falling back to JS:', e);
+        result = null;
+    }
+
+    // JS fallback if backend unavailable
+    if (!result) {
+        result = runHoldemBatchLocal(numGames, numP, strategies, config);
+    }
+
+    // Render results
+    renderBatchResults(result, numGames, strategies);
+    btn.disabled = false;
+    btn.textContent = 'Run Simulation';
+}
+
+function runHoldemBatchLocal(numGames, numP, strategies, config) {
+    const h = state.holdem;
+    const wins = new Array(numP).fill(0);
+    const chipChange = new Array(numP).fill(0);
+    const handDist = {};
+    const foldCount = new Array(numP).fill(0);
+    const bluffRaises = new Array(numP).fill(0);
+    const bluffWins = new Array(numP).fill(0);
+    const bluffsCalled = new Array(numP).fill(0);
+    const bluffCallAttempts = new Array(numP).fill(0);
+    const bluffCallCorrect = new Array(numP).fill(0);
+    let totalShowdowns = 0;
+    let totalShowdownHands = 0;
+
+    for (let g = 0; g < numGames; g++) {
+        const players = strategies.map((s, i) => ({
+            strategy: s === 'human' ? 'TA' : s,
+            chips: h.startChips,
+            personalDice: [0, 0, 0],
+            folded: false,
+            currentBet: 0,
+            totalBet: 0,
+            allIn: false,
+            _acted: false,
+            lastRaiseIsBluff: false,
+        }));
+
+        let pot = 0;
+        let currentBet = 0;
+        const dealerPos = g % numP;
+        const dealerDice = [0, 0];
+
+        // Blinds
+        const sb = (dealerPos + 1) % numP;
+        const bb = (dealerPos + 2) % numP;
+        const sbAmt = Math.min(h.smallBlind, players[sb].chips);
+        players[sb].chips -= sbAmt;
+        players[sb].currentBet = sbAmt;
+        players[sb].totalBet = sbAmt;
+        pot += sbAmt;
+        const bbAmt = Math.min(h.bigBlind, players[bb].chips);
+        players[bb].chips -= bbAmt;
+        players[bb].currentBet = bbAmt;
+        players[bb].totalBet = bbAmt;
+        pot += bbAmt;
+        currentBet = bbAmt;
+
+        let gameDone = false;
+        let lastRaiserIdx = -1;
+
+        for (let round = 1; round <= 3 && !gameDone; round++) {
+            players.forEach(p => {
+                if (!p.folded) p.personalDice[round - 1] = rollOneDie(h.sides);
+            });
+            if (round >= 2) dealerDice[round - 2] = rollOneDie(h.sides);
+
+            if (round > 1) { currentBet = 0; }
+            players.forEach(p => { p.currentBet = 0; p._acted = false; });
+
+            const startP = (dealerPos + 1) % numP;
+            let bettingDone = false;
+            let bettingRounds = 0;
+
+            while (!bettingDone && bettingRounds < numP * 4) {
+                bettingRounds++;
+                const active = players.filter(p => !p.folded && !p.allIn);
+                if (active.length <= 1 || active.every(p => p._acted && p.currentBet >= currentBet)) {
+                    bettingDone = true;
+                    break;
+                }
+
+                for (let step = 0; step < numP; step++) {
+                    const idx = (startP + step) % numP;
+                    const p = players[idx];
+                    if (p.folded || p.allIn) continue;
+                    if (p._acted && p.currentBet >= currentBet) continue;
+
+                    const str = estimateStrengthQuick(idx, players, dealerDice, config, round);
+                    const prof = h.aiProfiles[p.strategy] || h.aiProfiles.TA;
+                    const toCall = currentBet - p.currentBet;
+                    const canCheck = toCall <= 0;
+
+                    if (str < prof.foldBelow) {
+                        if (canCheck) {
+                            if (Math.random() < prof.checkBluff) {
+                                const raiseAmt = currentBet + h.bigBlind * prof.raiseMultiplier;
+                                const toAdd = Math.min(raiseAmt - p.currentBet, p.chips);
+                                p.chips -= toAdd;
+                                p.currentBet += toAdd;
+                                p.totalBet += toAdd;
+                                pot += toAdd;
+                                currentBet = p.currentBet;
+                                if (p.chips === 0) p.allIn = true;
+                                players.forEach((op, oi) => { if (oi !== idx && !op.folded && !op.allIn) op._acted = false; });
+                                p.lastRaiseIsBluff = true;
+                                lastRaiserIdx = idx;
+                                bluffRaises[idx]++;
+                            }
+                        } else {
+                            // Probabilistic bluff-call
+                            if (Math.random() < str) {
+                                const toAdd = Math.min(toCall, p.chips);
+                                p.chips -= toAdd;
+                                p.currentBet += toAdd;
+                                p.totalBet += toAdd;
+                                pot += toAdd;
+                                if (p.chips === 0) p.allIn = true;
+                                bluffCallAttempts[idx]++;
+                                if (lastRaiserIdx >= 0 && players[lastRaiserIdx].lastRaiseIsBluff) {
+                                    bluffCallCorrect[idx]++;
+                                }
+                            } else {
+                                if (Math.random() < prof.betBluff) {
+                                    const raiseAmt = currentBet + h.bigBlind * prof.raiseMultiplier;
+                                    const toAdd = Math.min(raiseAmt - p.currentBet, p.chips);
+                                    p.chips -= toAdd;
+                                    p.currentBet += toAdd;
+                                    p.totalBet += toAdd;
+                                    pot += toAdd;
+                                    currentBet = p.currentBet;
+                                    if (p.chips === 0) p.allIn = true;
+                                    players.forEach((op, oi) => { if (oi !== idx && !op.folded && !op.allIn) op._acted = false; });
+                                    p.lastRaiseIsBluff = true;
+                                    lastRaiserIdx = idx;
+                                    bluffRaises[idx]++;
+                                } else {
+                                    p.folded = true;
+                                    foldCount[idx]++;
+                                }
+                            }
+                        }
+                    } else if (str >= prof.raiseAbove) {
+                        const raiseAmt = currentBet + h.bigBlind * prof.raiseMultiplier;
+                        const toAdd = Math.min(raiseAmt - p.currentBet, p.chips);
+                        p.chips -= toAdd;
+                        p.currentBet += toAdd;
+                        p.totalBet += toAdd;
+                        pot += toAdd;
+                        currentBet = p.currentBet;
+                        if (p.chips === 0) p.allIn = true;
+                        players.forEach((op, oi) => { if (oi !== idx && !op.folded && !op.allIn) op._acted = false; });
+                        p.lastRaiseIsBluff = false;
+                        lastRaiserIdx = idx;
+                    } else {
+                        if (canCheck) {
+                            // check
+                        } else {
+                            const toAdd = Math.min(toCall, p.chips);
+                            p.chips -= toAdd;
+                            p.currentBet += toAdd;
+                            p.totalBet += toAdd;
+                            pot += toAdd;
+                            if (p.chips === 0) p.allIn = true;
+                        }
+                    }
+                    p._acted = true;
+                }
+
+                const activeAfter = players.filter(p => !p.folded && !p.allIn);
+                if (activeAfter.every(p => p._acted && p.currentBet >= currentBet)) bettingDone = true;
+            }
+
+            if (players.filter(p => !p.folded).length <= 1) gameDone = true;
+        }
+
+        // Showdown
+        const remaining = players.map((p, i) => ({ p, i })).filter(x => !x.p.folded);
+        if (remaining.length === 1) {
+            remaining[0].p.chips += pot;
+            wins[remaining[0].i]++;
+            // If winner was bluffing, count as bluff win
+            if (remaining[0].p.lastRaiseIsBluff) bluffWins[remaining[0].i]++;
+        } else {
+            totalShowdowns++;
+            totalShowdownHands += remaining.length;
+            let bestHand = null;
+            let bestPlayers = [];
+            remaining.forEach(x => {
+                const fullHand = [...x.p.personalDice, ...dealerDice];
+                const hands = getHands(fullHand, config.sides, config.minStraight);
+                hands.forEach(hh => {
+                    const k = handKey(hh);
+                    handDist[k] = (handDist[k] || 0) + 1;
+                });
+
+                if (!bestHand) {
+                    bestHand = fullHand;
+                    bestPlayers = [x];
+                } else {
+                    const cmp = compareHands(fullHand, bestHand, config);
+                    if (cmp > 0) { bestHand = fullHand; bestPlayers = [x]; }
+                    else if (cmp === 0) bestPlayers.push(x);
+                }
+            });
+
+            const share = Math.floor(pot / bestPlayers.length);
+            const winShare = 1 / bestPlayers.length;
+            bestPlayers.forEach(x => { x.p.chips += share; wins[x.i] += winShare; });
+        }
+
+        players.forEach((p, i) => { chipChange[i] += (p.chips - h.startChips); });
+    }
+
+    return {
+        winRates: wins.map(w => w / numGames),
+        avgChipChange: chipChange.map(c => c / numGames),
+        handDistribution: handDist,
+        totalShowdownHands,
+        bluffStats: strategies.map((s, i) => ({
+            bluffRate: bluffRaises[i] / Math.max(numGames, 1),
+            bluffSuccess: bluffRaises[i] > 0 ? bluffWins[i] / bluffRaises[i] : 0,
+            bluffCallCorrect: bluffCallAttempts[i] > 0 ? bluffCallCorrect[i] / bluffCallAttempts[i] : 0,
+            bluffRaises: bluffRaises[i],
+            bluffCallAttempts: bluffCallAttempts[i],
+        })),
+        foldRates: foldCount.map(f => f / (numGames * 3)),
+    };
+}
+
+function renderBatchResults(result, numGames, strategies) {
+    const output = document.getElementById('holdem-batch-output');
+    let html = '';
+
+    // Win rates
+    html += '<div class="batch-panel"><h4>Win Rates</h4>';
+    const maxWin = Math.max(...result.winRates);
+    result.winRates.forEach((wr, i) => {
+        const pct = (wr * 100).toFixed(1);
+        const label = (i === 0 ? 'You' : 'P' + (i + 1)) + ' (' + strategies[i] + ')';
+        const barW = maxWin > 0 ? (wr / maxWin * 100) : 0;
+        html += '<div class="batch-stat-row"><span class="stat-label">' + label + '</span>' +
+            '<span class="stat-value">' + pct + '%</span>' +
+            '<div class="stat-bar"><div class="stat-bar-fill" style="width:' + barW + '%"></div></div></div>';
+    });
+    html += '</div>';
+
+    // Chip changes
+    html += '<div class="batch-panel"><h4>Avg Chip Change per Game</h4>';
+    result.avgChipChange.forEach((avg, i) => {
+        const label = (i === 0 ? 'You' : 'P' + (i + 1)) + ' (' + strategies[i] + ')';
+        const color = avg >= 0 ? 'var(--green)' : 'var(--red)';
+        html += '<div class="batch-stat-row"><span class="stat-label">' + label + '</span>' +
+            '<span class="stat-value" style="color:' + color + '">' + (avg >= 0 ? '+' : '') + avg.toFixed(1) + '</span></div>';
+    });
+    html += '</div>';
+
+    // Hand distribution at showdown
+    const handDist = result.handDistribution || {};
+    const totalHands = result.totalShowdownHands || Object.values(handDist).reduce((s, v) => s + v, 0);
+    if (totalHands > 0) {
+        html += '<div class="batch-panel"><h4>Hand Distribution at Showdown</h4>';
+        const hdKeys = Object.keys(handDist).sort((a, b) => (handDist[b] || 0) - (handDist[a] || 0));
+        const maxHD = Math.max(...Object.values(handDist));
+        hdKeys.forEach(key => {
+            const count = handDist[key];
+            const pct = ((count / totalHands) * 100).toFixed(1);
+            const barW = (count / maxHD * 100);
+            html += '<div class="batch-stat-row"><span class="stat-label">' + handLabel(key) + '</span>' +
+                '<span class="stat-value">' + count + ' (' + pct + '%)</span>' +
+                '<div class="stat-bar"><div class="stat-bar-fill" style="width:' + barW + '%"></div></div></div>';
+        });
+        html += '</div>';
+    }
+
+    // Bluff & Fold stats
+    html += '<div class="batch-panel"><h4>Bluff & Fold Stats</h4>';
+    strategies.forEach((s, i) => {
+        const label = (i === 0 ? 'You' : 'P' + (i + 1)) + ' (' + s + ')';
+        const bs = result.bluffStats[i];
+        const foldPct = (result.foldRates[i] * 100).toFixed(1);
+        const bluffPct = (bs.bluffRate * 100).toFixed(1);
+        const bluffSucc = bs.bluffRaises > 0 ? ((bs.bluffSuccess * 100).toFixed(0) + '%') : '--';
+        const callCorr = bs.bluffCallAttempts > 0 ? ((bs.bluffCallCorrect * 100).toFixed(0) + '%') : '--';
+        html += '<div class="batch-stat-row"><span class="stat-label">' + label + '</span>' +
+            '<span class="stat-value" style="font-size:11px">Fold: ' + foldPct + '% &nbsp; Bluff: ' + bluffPct +
+            '% &nbsp; Bluff success: ' + bluffSucc + ' &nbsp; Call accuracy: ' + callCorr + '</span></div>';
+    });
+    html += '</div>';
+
+    html += '<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">' +
+        numGames.toLocaleString() + ' games simulated' +
+        (backendAvailable ? ' (Python backend)' : ' (JS fallback)') + '</div>';
+
+    output.innerHTML = html;
+}
+
+function estimateStrengthQuick(playerIdx, players, dealerDice, config, round) {
+    const p = players[playerIdx];
+    const knownPersonal = p.personalDice.slice(0, round);
+    const unknownPersonal = 3 - round;
+    const knownDealer = dealerDice.filter(d => d > 0);
+    const unknownDealer = 2 - knownDealer.length;
+    const samples = 50;
+    let wins = 0;
+
+    for (let s = 0; s < samples; s++) {
+        const myHand = [...knownPersonal];
+        for (let d = 0; d < unknownPersonal; d++) myHand.push(rollOneDie(config.sides));
+        const dc = [...knownDealer];
+        for (let d = 0; d < unknownDealer; d++) dc.push(rollOneDie(config.sides));
+        const myFull = [...myHand, ...dc];
+
+        const oppHand = [];
+        for (let d = 0; d < 3; d++) oppHand.push(rollOneDie(config.sides));
+        const oppFull = [...oppHand, ...dc];
+
+        const cmp = compareHands(myFull, oppFull, config);
+        if (cmp > 0) wins++;
+        else if (cmp === 0) wins += 0.5;
+    }
+    return wins / samples;
+}
+
+/* ==============================================
+   INIT
+   ============================================== */
+checkBackend().then(() => {
+    console.log('Backend:', backendAvailable ? 'connected' : 'unavailable (using JS fallback)');
+});
+renderProbPage();
+renderPlayerConfig();
+renderVisToggles();
+renderRankingEditor();
+renderAIProfileEditor();
+renderHoldemBoard();
+</script>
+
+<div class="ranking-overlay" id="ranking-overlay">
+    <div class="ranking-overlay-inner">
+        <button class="ranking-close" onclick="closeRankingOverlay()">&times;</button>
+        <h3>Hand Ranking</h3>
+        <p class="ranking-hint">Drag to reorder across all hand types. Toggle to enable/disable. Higher = beats lower.</p>
+        <div id="ranking-editor-full"></div>
+    </div>
+</div>
+
+</body>
+</html>
